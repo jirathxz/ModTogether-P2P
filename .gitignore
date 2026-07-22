@@ -1,0 +1,28 @@
+# Ignore all .md files EXCEPT README.md
+*.md
+!README.md
+!readme.md
+
+# Legacy & Info Folders (Ignored)
+_legacy/
+_info/
+
+# Build Outputs (.NET / C#)
+bin/
+obj/
+dist/
+build/
+*.user
+*.suo
+
+# IDE & Editor Settings
+.vs/
+.vscode/
+.idea/
+
+# Local App Cache & Generated Logs
+GameMods/
+.recycle_mods/
+installed_mods.json
+*.log
+*.tmp

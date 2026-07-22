@@ -1,0 +1,74 @@
+<Page x:Class="ModTogetherMHW.SettingsPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      Title="SettingsPage">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+        <Grid Margin="24" MinWidth="400">
+            <StackPanel MaxWidth="800" HorizontalAlignment="Stretch">
+                <TextBlock x:Name="LblSettingsTitle" Text="Settings" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24" />
+                
+                <ui:CardControl Icon="{ui:SymbolIcon Folder24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblGameDir" Text="MHW Game Directory:" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescGameDir" Text="Select the folder where MonsterHunterWorld.exe is located." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBox x:Name="TxtMhwDir" PlaceholderText="Select Monster Hunter World folder..." Width="300" Margin="0,0,8,0" IsReadOnly="True" />
+                        <ui:Button x:Name="BtnSelectFolder" Content="Select Folder" Click="BtnSelectFolder_Click" Margin="0,0,8,0" />
+                        <ui:Button x:Name="BtnResetPath" Content="Reset Path" Click="BtnResetPath_Click" Appearance="Secondary" />
+                    </StackPanel>
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon Checkmark24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblAutoEnable" Text="Auto Enable Downloaded Mods" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescAutoEnable" Text="Automatically install mods when downloading from Host." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ui:ToggleSwitch x:Name="ToggleAutoEnable" IsChecked="True" Checked="ToggleAutoEnable_Changed" Unchecked="ToggleAutoEnable_Changed" />
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon PaintBrush24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblTheme" Text="Theme / Appearance" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescTheme" Text="Change the application color theme." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ComboBox x:Name="ComboTheme" SelectionChanged="ComboTheme_SelectionChanged" Width="150">
+                        <ComboBoxItem x:Name="OptThemeLight" Content="Light" Tag="Light" />
+                        <ComboBoxItem x:Name="OptThemeDark" Content="Dark" Tag="Dark" />
+                        <ComboBoxItem x:Name="OptThemeSystem" Content="System" Tag="System" />
+                    </ComboBox>
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon Globe24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblLanguage" Text="Language:" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescLanguage" Text="Change the application display language." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ComboBox x:Name="ComboLanguage" SelectionChanged="ComboLanguage_SelectionChanged" Width="150">
+                        <ComboBoxItem Content="English" Tag="en" />
+                        <ComboBoxItem Content="ไทย" Tag="th" />
+                    </ComboBox>
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon ArrowSync24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblAppUpdate" Text="Application Updates" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescUpdate" Text="Check for the latest ModTogether versions on GitHub." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ui:Button x:Name="BtnCheckUpdate" Content="Check Update" Click="BtnCheckUpdate_Click" />
+                </ui:CardControl>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</Page>

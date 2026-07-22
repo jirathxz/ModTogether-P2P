@@ -1,0 +1,116 @@
+<ui:FluentWindow x:Class="ModTogetherMHW.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:ModTogetherMHW"
+        mc:Ignorable="d"
+        Title="ModTogether - MHW P2P Mod Manager" Height="850" Width="1100"
+        MinHeight="600" MinWidth="800"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Title="ModTogether - MHW P2P Mod Manager" Grid.Row="0" />
+        
+        <!-- Update Alert -->
+        <Border x:Name="UpdateAlertBar" Grid.Row="1" Background="#E6F1C40F" CornerRadius="4" Margin="16,8,16,0" Padding="12,8" Visibility="Collapsed">
+            <Grid>
+                <TextBlock x:Name="LblUpdateAlert" Text="Update Available: v0.0.0" FontWeight="SemiBold" Foreground="Black" VerticalAlignment="Center" />
+                <ui:Button x:Name="BtnUpdateNow" Content="Update Now" Icon="{ui:SymbolIcon ArrowDown24}" HorizontalAlignment="Right" Click="BtnUpdateNow_Click" Background="White" Foreground="Black" />
+            </Grid>
+        </Border>
+
+        <ui:NavigationView x:Name="RootNavigation" Grid.Row="2" PaneDisplayMode="Left" ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ui:NavigationView.MenuItems>
+                <ui:NavigationViewItem x:Name="NavRoom" Content="Room (Host / Join)" Icon="{ui:SymbolIcon People24}" TargetPageType="{x:Type local:RoomPage}" />
+                <ui:NavigationViewItem x:Name="NavManager" Content="Mod Manager" Icon="{ui:SymbolIcon Games24}" TargetPageType="{x:Type local:ManagerPage}" />
+                <ui:NavigationViewItem x:Name="NavRecovery" Content="Recovery Mod" Icon="{ui:SymbolIcon Delete24}" TargetPageType="{x:Type local:RecoveryPage}" />
+                <ui:NavigationViewItem x:Name="NavSettings" Content="Settings" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type local:SettingsPage}" />
+            </ui:NavigationView.MenuItems>
+        </ui:NavigationView>
+
+        <!-- Bottom Panel Toggle Bar -->
+        <Border Grid.Row="3" Margin="16,4,16,4">
+            <ui:Button x:Name="BtnToggleBottomPanel" Click="BtnToggleBottomPanel_Click" Appearance="Secondary" HorizontalAlignment="Right" Padding="10,4">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon x:Name="IconToggleBottomPanel" Symbol="ChevronDown24" Margin="0,0,6,0" />
+                    <TextBlock x:Name="TxtToggleBottomPanel" Text="Hide Console &amp; Status" FontSize="12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </ui:Button>
+        </Border>
+
+        <!-- Collapsible Bottom Container (Status + Console) -->
+        <StackPanel x:Name="BottomPanelContainer" Grid.Row="4" Visibility="Visible">
+            <!-- Status Card -->
+            <ui:Card Margin="16,4,16,8" Padding="16,10">
+                <StackPanel>
+                    <TextBlock Text="Connected Users: -" x:Name="LblUsers" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <ListBox x:Name="UserList" MaxHeight="68" Visibility="Collapsed" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" />
+                    
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="16" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        
+                        <StackPanel Grid.Column="0">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <ui:SymbolIcon Symbol="ArrowUp24" FontSize="14" Margin="0,0,6,0"/>
+                                <TextBlock Text="Upload" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                            <ProgressBar x:Name="PbUpload" Value="0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <ui:SymbolIcon Symbol="ArrowDown24" FontSize="14" Margin="0,0,6,0"/>
+                                <TextBlock Text="Download" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                            <ProgressBar x:Name="PbDownload" Value="0" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <ui:SymbolIcon Symbol="Add24" FontSize="14" Margin="0,0,6,0"/>
+                                <TextBlock Text="Install" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                            <ProgressBar x:Name="PbInstall" Value="0" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Console Log Card -->
+            <ui:Card Margin="16,0,16,16" Padding="16,10">
+                <StackPanel>
+                    <Grid Margin="0,0,0,8">
+                        <TextBlock Text="Console Log" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        <ui:Button Content="Clear Log" Icon="{ui:SymbolIcon Delete24}" HorizontalAlignment="Right" Click="BtnClearLog_Click" />
+                    </Grid>
+                    
+                    <TextBox x:Name="LogBox" IsReadOnly="True" MaxHeight="100" MinHeight="100" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    
+                    <Grid Margin="0,8,0,0">
+                        <ui:Button Content="Disconnect" Icon="{ui:SymbolIcon Dismiss24}" x:Name="BtnDisconnect" IsEnabled="False" Click="BtnDisconnect_Click" />
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.0.0a6 — by jirathxz</Hyperlink>
+                        </TextBlock>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>
