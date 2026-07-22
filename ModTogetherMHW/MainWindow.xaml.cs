@@ -7,8 +7,10 @@ namespace ModTogetherMHW
     public partial class MainWindow : FluentWindow
     {
         public static MainWindow? Instance { get; private set; }
-        private string _updateUrl = "";
-        private string _updateAssetName = "";
+        private string _updateUrlStandalone = "";
+        private string _updateAssetNameStandalone = "";
+        private string _updateUrlLightweight = "";
+        private string _updateAssetNameLightweight = "";
 
         public MainWindow()
         {
@@ -34,14 +36,44 @@ namespace ModTogetherMHW
             };
             
             App.Updater.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
-            App.Updater.OnUpdateAvailable += (version, url, filename) => 
+            App.Updater.OnUpdateAvailable += (version, assets) => 
             {
                 Dispatcher.Invoke(() => 
                 {
-                    _updateUrl = url;
-                    _updateAssetName = filename;
-                    LblUpdateAlert.Text = $"Update Available: {version}";
-                    UpdateAlertBar.Visibility = Visibility.Visible;
+                    bool foundAny = false;
+                    
+                    foreach (var asset in assets)
+                    {
+                        if (asset.Name.Contains("Standalone", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _updateUrlStandalone = asset.Url;
+                            _updateAssetNameStandalone = asset.Name;
+                            BtnUpdateStandalone.Visibility = Visibility.Visible;
+                            foundAny = true;
+                        }
+                        else if (asset.Name.Contains("Lightweight", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _updateUrlLightweight = asset.Url;
+                            _updateAssetNameLightweight = asset.Name;
+                            BtnUpdateLightweight.Visibility = Visibility.Visible;
+                            foundAny = true;
+                        }
+                        // Default to standalone button if the naming doesn't contain these words
+                        else if (string.IsNullOrEmpty(_updateUrlStandalone))
+                        {
+                            _updateUrlStandalone = asset.Url;
+                            _updateAssetNameStandalone = asset.Name;
+                            BtnUpdateStandalone.Visibility = Visibility.Visible;
+                            BtnUpdateStandalone.Content = "Update";
+                            foundAny = true;
+                        }
+                    }
+
+                    if (foundAny)
+                    {
+                        LblUpdateAlert.Text = $"Update Available: {version}";
+                        UpdateAlertBar.Visibility = Visibility.Visible;
+                    }
                 });
             };
             
@@ -182,19 +214,53 @@ namespace ModTogetherMHW
             LblUsers.Text = Models.I18N.GetString("lbl_users", App.Settings.Current.Language);
         }
 
-        private async void BtnUpdateNow_Click(object sender, RoutedEventArgs e)
+        private async void BtnUpdateStandalone_Click(object sender, RoutedEventArgs e)
         {
-            BtnUpdateNow.IsEnabled = false;
-            BtnUpdateNow.Content = "Downloading...";
-            Log("Downloading update... Please wait.");
+            BtnUpdateStandalone.IsEnabled = false;
+            BtnUpdateLightweight.IsEnabled = false;
+            BtnUpdateStandalone.Content = "Downloading...";
+            Log("Downloading Standalone update... Please wait.");
             
-            await App.Updater.DownloadAndInstallUpdateAsync(_updateUrl, _updateAssetName, progress => 
+            await App.Updater.DownloadAndInstallUpdateAsync(_updateUrlStandalone, _updateAssetNameStandalone, progress => 
             {
                 Dispatcher.Invoke(() => 
                 {
-                    BtnUpdateNow.Content = $"Downloading {progress}%";
+                    BtnUpdateStandalone.Content = $"Downloading {progress}%";
                 });
             });
+        }
+        
+        private async void BtnUpdateLightweight_Click(object sender, RoutedEventArgs e)
+        {
+            BtnUpdateStandalone.IsEnabled = false;
+            BtnUpdateLightweight.IsEnabled = false;
+            BtnUpdateLightweight.Content = "Downloading...";
+            Log("Downloading Lightweight update... Please wait.");
+            
+            await App.Updater.DownloadAndInstallUpdateAsync(_updateUrlLightweight, _updateAssetNameLightweight, progress => 
+            {
+                Dispatcher.Invoke(() => 
+                {
+                    BtnUpdateLightweight.Content = $"Downloading {progress}%";
+                });
+            });
+        }
+
+        private void BtnUpdateManual_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var psi = new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "https://github.com/jirathxz/ModTogether-P2P/releases/latest",
+                    UseShellExecute = true
+                };
+                System.Diagnostics.Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                Log($"⚠️ Failed to open browser: {ex.Message}");
+            }
         }
 
         public void Log(string message)

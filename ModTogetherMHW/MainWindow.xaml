@@ -26,7 +26,11 @@
         <Border x:Name="UpdateAlertBar" Grid.Row="1" Background="#E6F1C40F" CornerRadius="4" Margin="16,8,16,0" Padding="12,8" Visibility="Collapsed">
             <Grid>
                 <TextBlock x:Name="LblUpdateAlert" Text="Update Available: v0.0.0" FontWeight="SemiBold" Foreground="Black" VerticalAlignment="Center" />
-                <ui:Button x:Name="BtnUpdateNow" Content="Update Now" Icon="{ui:SymbolIcon ArrowDown24}" HorizontalAlignment="Right" Click="BtnUpdateNow_Click" Background="White" Foreground="Black" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <ui:Button x:Name="BtnUpdateStandalone" Content="Update Standalone" Margin="0,0,8,0" Icon="{ui:SymbolIcon ArrowDown24}" Click="BtnUpdateStandalone_Click" Background="White" Foreground="Black" Visibility="Collapsed" />
+                    <ui:Button x:Name="BtnUpdateLightweight" Content="Update Lightweight" Margin="0,0,8,0" Icon="{ui:SymbolIcon ArrowDown24}" Click="BtnUpdateLightweight_Click" Background="White" Foreground="Black" Visibility="Collapsed" />
+                    <ui:Button x:Name="BtnUpdateManual" Content="Manual (GitHub)" Icon="{ui:SymbolIcon Open24}" Click="BtnUpdateManual_Click" Background="Transparent" BorderBrush="Black" Foreground="Black" />
+                </StackPanel>
             </Grid>
         </Border>
 
@@ -106,7 +110,7 @@
                     <Grid Margin="0,8,0,0">
                         <ui:Button Content="Disconnect" Icon="{ui:SymbolIcon Dismiss24}" x:Name="BtnDisconnect" IsEnabled="False" Click="BtnDisconnect_Click" />
                         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.0.0a6 — by jirathxz</Hyperlink>
+                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.0.1 — by jirathxz</Hyperlink>
                         </TextBlock>
                     </Grid>
                 </StackPanel>

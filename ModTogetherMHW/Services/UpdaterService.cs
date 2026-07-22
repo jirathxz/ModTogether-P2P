@@ -12,9 +12,9 @@ namespace ModTogetherMHW.Services
     {
         private const string RepoOwner = "jirathxz";
         private const string RepoName = "ModTogether-P2P";
-        public const string CurrentVersion = "v1.0.0a6"; 
+        public const string CurrentVersion = "v1.0.1"; 
 
-        public event Action<string, string, string>? OnUpdateAvailable; // version, url, filename
+        public event Action<string, System.Collections.Generic.List<(string Name, string Url)>>? OnUpdateAvailable; // version, assets
         public event Action<string>? OnLog;
 
         public async Task CheckForUpdatesAsync()
@@ -39,20 +39,22 @@ namespace ModTogetherMHW.Services
                         // In a real app, compare version numbers properly.
                         // Here we just check if it's different.
                         
-                        string downloadUrl = "";
-                        string assetName = "";
+                        var availableAssets = new System.Collections.Generic.List<(string Name, string Url)>();
                         
                         if (root.TryGetProperty("assets", out var assets) && assets.GetArrayLength() > 0)
                         {
-                            var firstAsset = assets[0];
-                            downloadUrl = firstAsset.GetProperty("browser_download_url").GetString() ?? "";
-                            assetName = firstAsset.GetProperty("name").GetString() ?? "update.exe";
+                            foreach (var asset in assets.EnumerateArray())
+                            {
+                                string u = asset.GetProperty("browser_download_url").GetString() ?? "";
+                                string n = asset.GetProperty("name").GetString() ?? "update.exe";
+                                availableAssets.Add((n, u));
+                            }
                         }
                         
-                        if (!string.IsNullOrEmpty(downloadUrl))
+                        if (availableAssets.Count > 0)
                         {
                             OnLog?.Invoke($"💡 New update available: {tag}");
-                            OnUpdateAvailable?.Invoke(tag, downloadUrl, assetName);
+                            OnUpdateAvailable?.Invoke(tag, availableAssets);
                             return;
                         }
                     }
