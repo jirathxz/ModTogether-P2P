@@ -1,7 +1,7 @@
 <div align="center">
-  <h1>ModTogether 🎮</h1>
-  <p><strong>A fast, secure, and native Peer-to-Peer (P2P) mod synchronization & management tool for PC games.</strong></p>
-  <p>โปรแกรมสำหรับการซิงค์และจัดการไฟล์ม็อด (Mod) ระหว่างเพื่อนแบบ P2P ที่รวดเร็วและปลอดภัย (C# .NET 8 WPF)</p>
+  <h1>ModTogether Universal 🎮</h1>
+  <p><strong>A fast, modular, and native Peer-to-Peer (P2P) mod synchronization & management tool for PC games.</strong></p>
+  <p>โปรแกรมสำหรับการซิงค์และจัดการไฟล์ม็อด (Mod) ระหว่างเพื่อนแบบ P2P ที่รวดเร็ว ปลอดภัย และยืดหยุ่นด้วยระบบปลั๊กอิน (C# .NET 8 WPF)</p>
   <br>
   <a href="#-english-version">🇺🇸 English Version</a> &nbsp;|&nbsp; <a href="#-ภาษาไทย-thai-version">🇹🇭 ภาษาไทย (Thai Version)</a>
   <br><br>
@@ -16,39 +16,46 @@
 > ## Disclaimer
 > This application is **NOT** a cheat, hack, or memory injection tool. It is strictly a "File Synchronization & Mod Management Tool" designed to copy mod files over a network between peers. Its sole purpose is to facilitate Co-op gaming by ensuring all players have identical mod files. It does not interact with game memory or bypass Anti-Cheat systems. The mechanism is functionally identical to sending files via Google Drive or Zip archives over chat, but fully automated and direct.
 
-### 📦 Project Editions & Roadmap
+### 📦 Modular Architecture & Game Extensions
 
-- 🐉 **Monster Hunter World Special Edition (`ModTogetherMHW`)** — **[✅ RELEASED / ACTIVE]**
-  - Specialized C# .NET 8 WPF build tailored for Monster Hunter World. Combines P2P syncing with native `nativePC` folder management, archive extraction, and file conflict detection.
-- ⚙️ **Standard Universal Edition (Generic PC Games)** — **[🛠️ UNDER REFACTORING / COMING SOON]**
-  - General-purpose folder-based P2P sync tool for any PC co-op games. Currently being upgraded from legacy Python to native C# .NET 8 WPF.
+ModTogether is designed as a **Universal P2P Mod Management Suite** powered by an extensible plugin architecture:
+- 🧩 **Core App (`ModTogetherUniversal`)**: C# .NET 8 WPF application providing the high-speed P2P engine, Room management, Mod Explorer, and WinUI 3 Fluent interface.
+- 🔌 **Extension Engine (`ModTogether.API`)**: Plugin API supporting game extensions written in C#, Lua, or JavaScript.
+- 🐉 **Monster Hunter World Extension (`ModTogether.Extensions.MHW`)**: Official extension featuring `nativePC` folder management, P2P sync, archive extraction, and file conflict detection.
 
-### 🌟 Features (MHW Special Edition)
-- ⚡ **Real-Time P2P Sync:** Any mod added on the Host gets instantly pushed to all connected clients.
-- 🏠 **Unified Room Page:** Host (Create Session) and Client (Join Session) combined into a sleek side-by-side layout.
-- 📊 **Live Progress Bars:** Track Upload, Download, and Mod Installation progress in real time.
-- 📦 **Full Archive Support:** Native handling for `.zip`, `.7z` (including Solid LZMA2 archives), and `.rar`.
-- 🗑️ **Smart Recycle Bin:** Deleted files are safely moved to `.recycle_mods` across all peers for instant offline recovery.
-- 📁 **Conflict Detection:** Scans mod files to detect potential conflicts with existing `nativePC` files before installation.
-- 🌐 **Bilingual UI:** Switch between English and Thai seamlessly on the fly.
-- 🛡️ **Network Crash Protection:** Built-in WSAEACCES socket handling and active LAN subnet discovery.
-- 🎨 **Windows 11 Native Aesthetics:** Built with C# .NET 8 WPF and `WPF-UI` (WinUI 3 design language).
+### 🌟 Key Features
+- ⚡ **Real-Time P2P Sync:** Instant peer-to-peer file synchronization driven by embedded ASP.NET Core Kestrel HTTP streaming.
+- 🏠 **Unified Room Control:** Side-by-side Host (Create Session) & Client (Join Session) interface with 6-digit PIN authentication.
+- 📊 **Bandwidth Tracking & Live Progress:** Real-time speedometers and progress bars for Uploads, Downloads, and Mod extraction.
+- 🧩 **Plugin & Extension Manager:** Load and manage custom game extensions (C#, Lua, JS) seamlessly.
+- 🔍 **Mod Explorer:** Search and explore mods with Nexus Mods integration directly within the app.
+- 📦 **Full Archive Support:** Native handling for `.zip`, `.7z` (including Solid LZMA2 archives), and `.rar` files.
+- 🗑️ **Smart Recycle Bin:** Deleted mods are moved to `.recycle_mods` across all peers for instant offline recovery.
+- 📁 **Conflict Detection:** Scans mod archives to detect potential file overlaps before installation.
+- 🌐 **Bilingual UI (English / Thai):** Instant language switching without restarting the app.
+- 🛡️ **Network Crash Protection:** Active LAN subnet discovery (ZeroTier, Radmin VPN, Hamachi) with WSAEACCES socket handling.
+- 🎨 **Windows 11 Native Design:** Modern Fluent aesthetic powered by `WPF-UI` (WinUI 3 design language).
 
 ### 🚀 Build Editions
-To accommodate different user needs, ModTogether provides **2 build editions**:
-1. 🟢 **Standalone Edition (`ModTogetherMHW_Standalone_x64.exe` ~85MB)**
+ModTogether provides **2 build editions**:
+1. 🟢 **Standalone Edition (`ModTogether_Universal_Standalone_x64.exe` ~85MB)**
    - Includes .NET 8 Runtime bundled inside.
-   - **No installation or .NET download required.** Runs out of the box on any Windows 10/11 PC.
-2. ⚡ **Lightweight Edition (`ModTogetherMHW_Lightweight_x64.exe` ~10MB)**
+   - **No installation or .NET download required.** Completely portable out of the box.
+2. ⚡ **Lightweight Edition (`ModTogether_Universal_Lightweight_x64.exe` ~10MB)**
    - Ultra lightweight (~10MB).
    - Requires [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) installed on Windows.
 
 ### 🛠️ How to Build
 Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installed.
-1. Double-click `build_mhw.bat` (or run `.\build_mhw.bat` in Terminal).
-2. The script compiles both editions into the `dist` folder:
-   - `dist\ModTogetherMHW_Standalone_x64.exe`
-   - `dist\ModTogetherMHW_Lightweight_x64.exe`
+1. Double-click `build_universal.bat` (or run `.\build_universal.bat` in Terminal).
+2. Output executables and extensions will be generated in the `dist` folder:
+   - `dist\ModTogether_Universal_Standalone_x64.exe`
+   - `dist\ModTogether_Universal_Lightweight_x64.exe`
+   - `dist\Extensions\`
+
+### 🛡️ Antivirus & Security Notice
+- Built using official Microsoft .NET 8 Single-File bundling with ReadyToRun (R2R) compilation and embedded debug symbols.
+- **100% Safe & Open-Source:** No third-party packers (UPX) or obfuscators (ConfuserEx) are used. Certified clean for VirusTotal and Nexus Mods distribution.
 
 ### 🎯 How to Use
 
@@ -60,7 +67,7 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installe
 #### Managing & Auto-Installing Mods
 - Go to the **Mod Manager** tab.
 - Click **Import Mod** or drop `.zip`/`.7z`/`.rar` files into the `GameMods` folder.
-- Toggle checked mods and click **Install Checked** to extract them straight into your `nativePC` folder.
+- Toggle checked mods and click **Install Checked** to extract them straight into your game's mod directory.
 - If **Auto Enable Downloaded Mods** is enabled in Settings, newly downloaded P2P mods will automatically install upon arrival!
 
 ---
@@ -71,39 +78,46 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installe
 > ## คำชี้แจงสำคัญ (Disclaimer)
 > โปรแกรมนี้ **ไม่ใช่** โปรแกรมช่วยเล่น (Cheat/Hack) หรือโปรแกรมแทรกแซงหน่วยความจำ (Memory Injection) ของตัวเกมแต่อย่างใด เป็นเพียงแค่ "เครื่องมือซิงค์และจัดการไฟล์ม็อด (File Synchronization & Mod Management Tool)" ที่ช่วยคัดลอกไฟล์จากเครื่องหนึ่งไปยังอีกเครื่องหนึ่งผ่านเครือข่าย เพื่อความสะดวกในการเล่นเกม Co-op ที่ต้องใช้ม็อดตรงกันเท่านั้น ไม่มีเจตนาในการละเมิดกฎกติกาหรือข้ามผ่านระบบ Anti-Cheat ของเกม การทำงานเทียบเท่ากับการส่งไฟล์ผ่าน Google Drive หรือบีบอัดไฟล์ Zip ส่งให้เพื่อนทางแชท เพียงแต่เป็นการทำงานให้อัตโนมัติและส่งหากันโดยตรงเท่านั้น
 
-### 📦 สถานะเวอร์ชันของโปรเจกต์ (Project Editions & Roadmap)
+### 📦 สถาปัตยกรรมระบบปลั๊กอิน (Modular Architecture & Game Extensions)
 
-- 🐉 **Monster Hunter World Special Edition (`ModTogetherMHW`)** — **[✅ พร้อมใช้งาน / RELEASED]**
-  - เวอร์ชันพิเศษ C# .NET 8 WPF สำหรับเกม Monster Hunter World โดยเฉพาะ ผสานระบบ P2P เข้ากับระบบจัดการโฟลเดอร์ `nativePC`, คลายบีบอัดไฟล์ม็อด และตรวจจับไฟล์ทับซ้อน
-- ⚙️ **Standard Universal Edition (สำหรับเกมพีซีทั่วไป)** — **[🛠️ กำลังปรับปรุง / COMING SOON]**
-  - เครื่องมือซิงค์ไฟล์แบบ P2P ทั่วไปสำหรับเกม Co-op พีซีทุกเกม (Stardew Valley, Lethal Company, Palworld, Minecraft ฯลฯ) ขณะนี้กำลังอยู่ในช่วงยกเครื่องใหม่เป็น C# .NET 8 WPF
+ModTogether ถูกออกแบบเป็น **ชุดโปรแกรมซิงค์ม็อด P2P แบบเอนกประสงค์ (Universal Suite)** ที่ขับเคลื่อนด้วยระบบปลั๊กอินส่วนขยาย:
+- 🧩 **แอปพลิเคชันหลัก (`ModTogetherUniversal`)**: โปรแกรม C# .NET 8 WPF ที่ทำหน้าที่รันระบบ P2P, จัดการห้อง, Mod Explorer และหน้าต่าง WinUI 3 Fluent
+- 🔌 **ระบบส่วนขยาย (`ModTogether.API`)**: ระบบ API รองรับปลั๊กอินเสริมของแต่ละเกม พัฒนาได้ด้วย C#, Lua หรือ JavaScript
+- 🐉 **ส่วนขยาย Monster Hunter World (`ModTogether.Extensions.MHW`)**: ปลั๊กอินอย่างเป็นทางการสำหรับเกม MHW รองรับการจัดการโฟลเดอร์ `nativePC`, ซิงค์ P2P, คลายบีบอัดไฟล์ม็อด และตรวจจับไฟล์ทับซ้อน
 
-### 🌟 จุดเด่นและฟีเจอร์หลัก (รุ่น MHW Special Edition)
-- ⚡ **ซิงค์ม็อดเรียลไทม์ (Real-Time P2P Sync):** เมื่อโฮสต์เพิ่มม็อดใหม่ ระบบจะส่งไฟล์ไปให้เครื่องเพื่อนๆ ในห้องทันที
-- 🏠 **หน้าจัดการห้องรวม (Unified Room Page):** รวมหน้าสร้างห้อง (Host) และเข้าร่วมห้อง (Client) ไว้ในหน้าเดียวแบบ Side-by-Side
-- 📊 **แถบแสดงความคืบหน้าเรียลไทม์ (Live Progress Bars):** แสดงสถานะการ อัปโหลด, ดาวน์โหลด และการติดตั้งม็อด แบบ Real-time ด้านล่างโปรแกรม
+### 🌟 จุดเด่นและฟีเจอร์หลัก
+- ⚡ **ซิงค์ม็อดเรียลไทม์ (Real-Time P2P Sync):** เมื่อโฮสต์เพิ่มม็อดใหม่ ระบบจะส่งไฟล์ไปให้เครื่องเพื่อนๆ ในห้องทันทีผ่านระบบ Kestrel HTTP Streaming
+- 🏠 **หน้าจัดการห้องรวม (Unified Room Page):** รวมหน้าสร้างห้อง (Host) และเข้าร่วมห้อง (Client) ไว้ในหน้าเดียว พร้อมระบบรหัส PIN 6 หลัก
+- 📊 **ติดตามความเร็ว & แถบสถานะเรียลไทม์ (Bandwidth Tracker & Live Progress):** วัดความเร็ว Upload/Download และแสดงสถานะการคลายบีบอัดแบบ Real-time
+- 🧩 **ระบบจัดการปลั๊กอิน (Plugin & Extension Manager):** โหลดและจัดการส่วนขยายประจำเกมต่างๆ (C#, Lua, JS) ได้อย่างง่ายดาย
+- 🔍 **ระบบสำรวจม็อด (Mod Explorer):** ค้นหาและดูรายละเอียดม็อดเชื่อมต่อกับ Nexus Mods ได้โดยตรงในโปรแกรม
 - 📦 **รองรับไฟล์บีบอัดทุกประเภท:** คลายบีบอัดไฟล์ `.zip`, `.7z` (รวมถึง Solid LZMA2 Archives) และ `.rar` ได้สมบูรณ์
 - 🗑️ **ถังขยะกู้ข้อมูลประหยัดอินเทอร์เน็ต (Smart Recycle Bin):** ไฟล์ที่โดนลบจะย้ายไปเก็บที่ `.recycle_mods` สามารถกู้คืนได้ทันทีโดยไม่ต้องโหลดใหม่
-- 📁 **ตรวจสอบไฟล์ทับซ้อน (Conflict Detection):** สแกนไฟล์ม็อดเพื่อแจ้งเตือนความเสี่ยงการเขียนทับไฟล์ใน `nativePC` ก่อนเริ่มติดตั้ง
-- 🌐 **รองรับ 2 ภาษา (Bilingual UI):** สามารถสลับเปลี่ยนภาษาไทยและอังกฤษในโปรแกรมได้ทันที
-- 🛡️ **ระบบป้องกันการแครชด้าน Network:** มีระบบจัดการ UDP Socket WSAEACCES และสแกนหาห้องใน LAN/VPN ได้อย่างปลอดภัย
+- 📁 **ตรวจสอบไฟล์ทับซ้อน (Conflict Detection):** สแกนไฟล์ม็อดเพื่อแจ้งเตือนความเสี่ยงการเขียนทับไฟล์ก่อนเริ่มติดตั้ง
+- 🌐 **รองรับ 2 ภาษา (Bilingual UI):** สลับเปลี่ยนภาษาไทยและอังกฤษในโปรแกรมได้ทันทีโดยไม่ต้องรีสตาร์ท
+- 🛡️ **ระบบป้องกันการแครชด้าน Network:** มีระบบจัดการ UDP Socket WSAEACCES และสแกนหาห้องใน LAN/VPN (ZeroTier, Radmin VPN, Hamachi)
 - 🎨 **ดีไซน์สวยงามระดับ Windows 11:** พัฒนาด้วย C# .NET 8 WPF และ `WPF-UI` (WinUI 3 Design)
 
 ### 🚀 ตัวเลือกเวอร์ชันจัดส่ง (Build Editions)
 โปรแกรมมี **2 เวอร์ชัน** ให้เลือกใช้งานตามความเหมาะสม:
-1. 🟢 **เวอร์ชัน Standalone (`ModTogetherMHW_Standalone_x64.exe` ~85MB)**
+1. 🟢 **เวอร์ชัน Standalone (`ModTogether_Universal_Standalone_x64.exe` ~85MB)**
    - มัดรวม .NET 8 Runtime มาในตัวโปรแกรม
    - **ไม่ต้องติดตั้งโปรแกรมหรือลง .NET เพิ่มเติม** ดับเบิลคลิกเปิดใช้งานบน Windows 10/11 ได้ทันที
-2. ⚡ **เวอร์ชัน Lightweight (`ModTogetherMHW_Lightweight_x64.exe` ~10MB)**
+2. ⚡ **เวอร์ชัน Lightweight (`ModTogether_Universal_Lightweight_x64.exe` ~10MB)**
    - ขนาดไฟล์เบาหวิวเพียง ~10MB
    - จำเป็นต้องมี [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) ติดตั้งอยู่ในเครื่องก่อน
 
 ### 🛠️ วิธีการ Build โปรแกรม
 จำเป็นต้องมี [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) ติดตั้งบนเครื่องนักพัฒนา
-1. ดับเบิลคลิกไฟล์ `build_mhw.bat` (หรือรัน `.\build_mhw.bat` ใน Terminal)
-2. สคริปต์จะทำการ Restore Dependencies และ Build ทั้ง 2 เวอร์ชันออกมาในโฟลเดอร์ `dist`:
-   - `dist\ModTogetherMHW_Standalone_x64.exe`
-   - `dist\ModTogetherMHW_Lightweight_x64.exe`
+1. ดับเบิลคลิกไฟล์ `build_universal.bat` (หรือรัน `.\build_universal.bat` ใน Terminal)
+2. สคริปต์จะทำการ Restore Dependencies และ Build ทั้ง 2 เวอร์ชันพร้อม Extensions ออกมาในโฟลเดอร์ `dist`:
+   - `dist\ModTogether_Universal_Standalone_x64.exe`
+   - `dist\ModTogether_Universal_Lightweight_x64.exe`
+   - `dist\Extensions\`
+
+### 🛡️ ความปลอดภัยและการสแกนแอนตี้ไวรัส (Security & Antivirus Notice)
+- คอมไพล์ด้วยระบบ Single-File Bundling ทางการของ Microsoft .NET 8 ร่วมกับเทคโนโลยี ReadyToRun (R2R) และฝัง Debug Symbols (PDB) ในตัว
+- **ปลอดภัย 100% และเป็น Open-Source:** ไม่มีการใช้เครื่องมือพรางโค้ด (ConfuserEx) หรือเครื่องมือบีบอัดภายนอก (UPX) ที่มักทำให้เกิดผลสแกนไวรัสผิดพลาด ปลอดภัยสำหรับการแจกจ่ายบน VirusTotal และ Nexus Mods
 
 ### 🎯 วิธีการใช้งาน
 
@@ -115,7 +129,7 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installe
 #### การจัดการและติดตั้งม็อด (Mod Manager)
 - เข้าไปที่แท็บ **จัดการม็อด (Mod Manager)**
 - กดปุ่ม **นำเข้าม็อด** หรือลากไฟล์ `.zip`/`.7z`/`.rar` มาวางในโฟลเดอร์ `GameMods`
-- ติ๊กเลือกลิสต์ม็อดที่ต้องการ แล้วกดปุ่ม **ติดตั้งที่เลือก** เพื่อคลายบีบอัดลงโฟลเดอร์ `nativePC` ของเกมทันที
+- ติ๊กเลือกลิสต์ม็อดที่ต้องการ แล้วกดปุ่ม **ติดตั้งที่เลือก** เพื่อคลายบีบอัดลงโฟลเดอร์ม็อดของเกมทันที
 - หากเปิดตัวเลือก **เปิดใช้งาน Mod ที่โหลดมาอัตโนมัติ** ในหน้าตั้งค่า เมื่อดาวน์โหลดม็อดจากเพื่อนเสร็จ ระบบจะติดตั้งให้อัตโนมัติทันที!
 
 ---
@@ -126,3 +140,4 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installe
 - **[WPF-UI (v3.0.4)](https://github.com/lepoco/wpfui):** Modern WinUI 3 controls and Fluent design elements.
 - **[ASP.NET Core Kestrel](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel):** High-speed embedded HTTP web server powering P2P transfers.
 - **[SharpCompress (v0.38.0)](https://github.com/adamhathcock/sharpcompress):** Robust archive extraction library for Zip, 7z, and Rar formats.
+- **[ModTogether.API]:** Extensible plugin API for Lua, JavaScript, and C# game extensions.
