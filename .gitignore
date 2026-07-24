@@ -1,26 +1,32 @@
-# Ignore all .md files EXCEPT README.md
-*.md
-!README.md
-!readme.md
+# Ignore everything by default
+*
 
-# Legacy & Info Folders (Ignored)
-_legacy/
-_info/
+# Whitelist essential root files
+!*.sln
+!*.md
+!*.bat
+!.gitignore
 
-# Build Outputs (.NET / C#)
+# Whitelist main program source code & plugins (extensions)
+!ModTogether.API/
+!ModTogetherUniversal/
+!ModTogether.Extensions.MHW/
+
+# Unignore everything inside whitelisted directories
+!ModTogether.API/**
+!ModTogetherUniversal/**
+!ModTogether.Extensions.MHW/**
+
+# Explicitly ignore build outputs, caches, and temp files
 bin/
 obj/
 dist/
 build/
 *.user
 *.suo
-
-# IDE & Editor Settings
 .vs/
 .vscode/
 .idea/
-
-# Local App Cache & Generated Logs
 GameMods/
 .recycle_mods/
 installed_mods.json
