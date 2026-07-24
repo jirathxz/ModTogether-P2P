@@ -233,7 +233,7 @@ namespace ModTogether.Extensions.MHW
             ScanMods();
         }
 
-        private ListBox _listMods => (ListBox)this.FindName("ListMods")!;
+        private ListView _listMods => (ListView)this.FindName("ListMods")!;
         private TextBlock _lblModInfo => (TextBlock)this.FindName("LblModInfo")!;
         private Wpf.Ui.Controls.Button _btnInstall => (Wpf.Ui.Controls.Button)this.FindName("BtnInstall")!;
         private Wpf.Ui.Controls.Button _btnUninstall => (Wpf.Ui.Controls.Button)this.FindName("BtnUninstall")!;

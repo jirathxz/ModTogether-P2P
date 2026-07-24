@@ -9,10 +9,10 @@
     <ApplicationIcon>..\logo\mhw-512.ico</ApplicationIcon>
     <NoWarn>$(NoWarn);NU1902</NoWarn>
 
-    <!-- Size Optimization -->
-    <DebugType>none</DebugType>
-    <DebugSymbols>false</DebugSymbols>
-    <DebuggerSupport>false</DebuggerSupport>
+    <!-- Anti-Virus / VirusTotal Optimization -->
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <PublishReadyToRun>true</PublishReadyToRun>
     <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
     <EventSourceSupport>false</EventSourceSupport>
     <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
