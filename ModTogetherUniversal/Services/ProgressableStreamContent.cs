@@ -30,6 +30,7 @@ namespace ModTogetherUniversal.Services
             {
                 await stream.WriteAsync(buffer, 0, bytesRead);
                 uploadedBytes += bytesRead;
+                BandwidthTracker.AddUploadedBytes(bytesRead);
                 if (totalBytes > 0)
                 {
                     _progress?.Invoke((int)((uploadedBytes * 100) / totalBytes));

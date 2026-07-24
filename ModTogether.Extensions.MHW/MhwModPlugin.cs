@@ -1,34 +1,139 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 using ModTogether.API;
 using ModTogether.Extensions.MHW.Models;
 
 namespace ModTogether.Extensions.MHW
 {
-    // Fake App class to satisfy legacy code dependencies without modifying them
     public static class App
     {
         public static AppSettings Settings = new AppSettings();
         public static ModTogether.Extensions.MHW.Services.ModInstaller Installer = new ModTogether.Extensions.MHW.Services.ModInstaller(Settings.Current.MhwDirectory);
-        public static FakeServer Server = new FakeServer();
-        public static FakeClient Client = new FakeClient();
+        public static RealServerBridge Server = new RealServerBridge();
+        public static RealClientBridge Client = new RealClientBridge();
     }
 
-    public class FakeServer { 
-        public bool IsRunning = false; 
-        public System.Collections.Concurrent.ConcurrentDictionary<string, string> DeletedMods = new();
-        public string HostUsername = "Host";
+    public class RealServerBridge
+    { 
+        public bool IsRunning
+        {
+            get
+            {
+                try
+                {
+                    var asm = System.AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "ModTogetherUniversal");
+                    var appType = asm?.GetType("ModTogetherUniversal.App");
+                    var serverProp = appType?.GetProperty("Server", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                    var serverObj = serverProp?.GetValue(null);
+                    var isRunningProp = serverObj?.GetType().GetProperty("IsRunning");
+                    return (bool)(isRunningProp?.GetValue(serverObj) ?? false);
+                }
+                catch { return false; }
+            }
+        }
+
+        public RealDeletedModsBridge DeletedMods { get; } = new RealDeletedModsBridge();
+        public string HostUsername => "Host";
         public void BroadcastModStateChange(string id, ModState state) { } 
     }
-    public class FakeClient { 
-        public bool IsConnected = false; 
-        public System.Threading.Tasks.Task DeleteModAsync(string id) { return System.Threading.Tasks.Task.CompletedTask; }
+
+    public class RealDeletedModsBridge
+    {
+        public bool TryAdd(string key, string value)
+        {
+            try
+            {
+                var asm = System.AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "ModTogetherUniversal");
+                var appType = asm?.GetType("ModTogetherUniversal.App");
+                var serverProp = appType?.GetProperty("Server", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var serverObj = serverProp?.GetValue(null);
+                if (serverObj != null)
+                {
+                    var deletedModsProp = serverObj.GetType().GetProperty("DeletedMods");
+                    var deletedModsObj = deletedModsProp?.GetValue(serverObj);
+                    if (deletedModsObj != null)
+                    {
+                        var tryAddMethod = deletedModsObj.GetType().GetMethod("TryAdd", new[] { typeof(string), typeof(string) });
+                        return (bool)(tryAddMethod?.Invoke(deletedModsObj, new object[] { key, value }) ?? false);
+                    }
+                }
+            }
+            catch { }
+            return false;
+        }
+    }
+
+    public class RealClientBridge
+    { 
+        public bool IsConnected => true; 
+
+        public async System.Threading.Tasks.Task DeleteModAsync(string id)
+        {
+            try
+            {
+                var asm = System.AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "ModTogetherUniversal");
+                var appType = asm?.GetType("ModTogetherUniversal.App");
+                var clientProp = appType?.GetProperty("Client", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var clientObj = clientProp?.GetValue(null);
+                if (clientObj != null)
+                {
+                    var deleteMethod = clientObj.GetType().GetMethod("DeleteModAsync", new[] { typeof(string) });
+                    if (deleteMethod != null)
+                    {
+                        var task = (System.Threading.Tasks.Task)deleteMethod.Invoke(clientObj, new object[] { id })!;
+                        await task;
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RealClientBridge DeleteModAsync Error] {ex.Message}");
+            }
+        }
+
         public void ReportModStateChange(string id, ModState state) { } 
     }
-    public class MainWindow { 
+
+    public class MainWindow
+    { 
         public static MainWindow Instance = new MainWindow();
-        public void Log(string msg) { System.Diagnostics.Debug.WriteLine(msg); } 
+        public void Log(string msg)
+        {
+            try
+            {
+                var asm = System.AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "ModTogetherUniversal");
+                var mwType = asm?.GetType("ModTogetherUniversal.MainWindow");
+                var instanceProp = mwType?.GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var mwObj = instanceProp?.GetValue(null);
+                if (mwObj != null)
+                {
+                    var logMethod = mwType?.GetMethod("Log", new[] { typeof(string) });
+                    logMethod?.Invoke(mwObj, new object[] { msg });
+                    return;
+                }
+            }
+            catch { }
+            System.Diagnostics.Debug.WriteLine(msg);
+        }
+
         public bool ValidateGamePath() { return true; }
-        public void UpdateInstallProgress(int p) { }
+        
+        public void UpdateInstallProgress(int p)
+        {
+            try
+            {
+                var asm = System.AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "ModTogetherUniversal");
+                var mwType = asm?.GetType("ModTogetherUniversal.MainWindow");
+                var instanceProp = mwType?.GetProperty("Instance", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                var mwObj = instanceProp?.GetValue(null);
+                if (mwObj != null)
+                {
+                    var progressMethod = mwType?.GetMethod("UpdateDownloadProgress", new[] { typeof(int) });
+                    progressMethod?.Invoke(mwObj, new object[] { p });
+                }
+            }
+            catch { }
+        }
+
         public object? FindName(string name) { return null; }
     }
     

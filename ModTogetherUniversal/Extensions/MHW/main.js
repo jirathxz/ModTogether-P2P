@@ -3,7 +3,7 @@
 
 // --- State Management ---
 function getStatePath(gameDir) {
-    return API.CombinePath(gameDir, "GameMods/mhw_installed_mods.json");
+    return API.CombinePath(gameDir, "mhw_installed_mods.json");
 }
 function loadState(gameDir) {
     var content = API.ReadState(getStatePath(gameDir));

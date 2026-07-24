@@ -10,6 +10,27 @@
       Title="ModExplorerPage"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}">
 
+    <Page.Resources>
+        <ContextMenu x:Key="ModItemContextMenu">
+            <MenuItem Header="Open Location" Click="MenuItem_OpenLocation_Click">
+                <MenuItem.Icon>
+                    <ui:SymbolIcon Symbol="FolderOpen24" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Backup Mod" Click="MenuItem_Backup_Click">
+                <MenuItem.Icon>
+                    <ui:SymbolIcon Symbol="Save24" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
+            <MenuItem Header="{Binding DataContext.MenuDeleteText, RelativeSource={RelativeSource AncestorType=Page}}" Click="MenuItem_Delete_Click">
+                <MenuItem.Icon>
+                    <ui:SymbolIcon Symbol="Delete24" Foreground="Red" />
+                </MenuItem.Icon>
+            </MenuItem>
+        </ContextMenu>
+    </Page.Resources>
+
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -58,23 +79,45 @@
             </Grid.RowDefinitions>
 
             <!-- Toolbar -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                <ui:Button x:Name="BtnOpenModsFolder" Content="Open Mods Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenModsFolder_Click" Appearance="Primary" Margin="0,0,8,0" />
-                <ui:Button x:Name="BtnRefreshMods" Content="Refresh" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnRefreshMods_Click" />
-                <TextBlock x:Name="TxtStatus" VerticalAlignment="Center" Margin="16,0,0,0" Foreground="Gray" />
-            </StackPanel>
+            <WrapPanel Grid.Row="0" Margin="0,0,0,8" VerticalAlignment="Center">
+                <ui:Button x:Name="BtnCheckAll" Content="Check All" Icon="{ui:SymbolIcon CheckmarkSquare24}" Click="BtnCheckAll_Click" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnUncheckAll" Content="Uncheck All" Icon="{ui:SymbolIcon Square24}" Click="BtnUncheckAll_Click" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnScanConflicts" Content="Scan Conflicts ⚔️" Icon="{ui:SymbolIcon Warning24}" Click="BtnScanConflicts_Click" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnImportMod" Content="Import Mod" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnImportMod_Click" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnOpenModsFolder" Content="Open Mods Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenModsFolder_Click" Appearance="Primary" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnRefreshMods" Content="Refresh" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnRefreshMods_Click" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnBackupChecked" Content="Backup Checked" Icon="{ui:SymbolIcon Save24}" Click="BtnBackupChecked_Click" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnDeleteChecked" Content="Delete Checked" Icon="{ui:SymbolIcon Delete24}" Click="BtnDeleteChecked_Click" Appearance="Danger" Margin="0,0,8,4" />
+                <TextBlock x:Name="TxtStatus" VerticalAlignment="Center" Margin="8,0,0,4" Foreground="Gray" />
+            </WrapPanel>
 
-            <!-- Mods ListView -->
             <ListView Grid.Row="1" x:Name="ListMods" SelectionMode="Single" Background="Transparent" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" AlternationCount="2">
                 <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
+                    <Style TargetType="{x:Type ListViewItem}">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Setter Property="Margin" Value="0,2" />
                         <Setter Property="Padding" Value="8,4" />
                         <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
+                                        <GridViewRowPresenter Content="{TemplateBinding Content}" Columns="{TemplateBinding GridView.ColumnCollection}" />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                        <Setter Property="ContextMenu" Value="{StaticResource ModItemContextMenu}" />
                         <Style.Triggers>
                             <Trigger Property="ItemsControl.AlternationIndex" Value="1">
                                 <Setter Property="Background" Value="#05FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#10FFFFFF" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#20FFFFFF" />
                             </Trigger>
                         </Style.Triggers>
                     </Style>
@@ -93,7 +136,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="400">
+                        <GridViewColumn Width="360">
                             <GridViewColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DataContext.ColFilenameText, RelativeSource={RelativeSource AncestorType=Page}}" />
@@ -101,7 +144,17 @@
                             </GridViewColumn.HeaderTemplate>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <TextBlock Text="{Binding Filename}" VerticalAlignment="Center" FontWeight="Medium" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Visibility="{Binding ConflictVisibility}" Margin="0,0,6,0" ToolTip="{Binding ConflictWarningText}" />
+                                        <TextBlock Text="{Binding Filename}" VerticalAlignment="Center" FontWeight="Medium" Foreground="{DynamicResource TextFillColorPrimaryBrush}" ToolTip="{Binding ConflictWarningText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Width="80" Header="Priority">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Priority}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="LightBlue" FontWeight="Bold" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

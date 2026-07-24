@@ -36,9 +36,10 @@ namespace ModTogetherUniversal
             
             DispatcherUnhandledException += (s, args) => 
             {
+                var ex = args.Exception.InnerException ?? args.Exception;
                 string logPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "error.log");
-                System.IO.File.WriteAllText(logPath, args.Exception.ToString());
-                System.Windows.MessageBox.Show("UI Crash: " + args.Exception.Message + "\n\n" + args.Exception.StackTrace);
+                System.IO.File.WriteAllText(logPath, ex.ToString());
+                System.Windows.MessageBox.Show("UI Crash: " + ex.Message + "\n\n" + ex.StackTrace);
                 args.Handled = true;
             };
         }

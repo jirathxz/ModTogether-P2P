@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,11 +32,11 @@ namespace ModTogetherUniversal
 
         private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            string extPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Extensions");
-            Directory.CreateDirectory(extPath);
+            string pluginsPath = PluginManager.Instance.GetPluginsPath();
+            Directory.CreateDirectory(pluginsPath);
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo() 
             { 
-                FileName = extPath, 
+                FileName = pluginsPath, 
                 UseShellExecute = true, 
                 Verb = "open" 
             });

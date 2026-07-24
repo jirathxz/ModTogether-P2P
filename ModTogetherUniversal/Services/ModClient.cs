@@ -39,14 +39,18 @@ namespace ModTogetherUniversal.Services
         }
 
         private CancellationTokenSource? _syncCts;
-        public event Action<List<string>>? OnUsersUpdate;
+        public event Action<List<UserSyncState>>? OnUsersUpdate;
         public event Action? OnKicked;
+
+        public bool IsSynced { get; private set; }
+        public int CurrentSyncProgress { get; private set; }
+        public string CurrentActivity { get; private set; } = "";
 
         public async Task<bool> HeartbeatAsync()
         {
             try
             {
-                var response = await _httpClient.PostAsync($"http://{_hostIp}:{_port}/heartbeat?username={Uri.EscapeDataString(_username)}", null);
+                var response = await _httpClient.PostAsync($"http://{_hostIp}:{_port}/heartbeat?username={Uri.EscapeDataString(_username)}&isSynced={IsSynced}&syncProgress={CurrentSyncProgress}&currentActivity={Uri.EscapeDataString(CurrentActivity)}", null);
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadFromJsonAsync<HeartbeatResponse>();
@@ -110,6 +114,40 @@ namespace ModTogetherUniversal.Services
 
                         var recycleDir = Path.Combine(cacheDir, ".recycle_mods");
 
+                        // Pre-calculate sync tasks
+                        var modsToUpload = localMods.Where(m => !serverData.deleted_mods.ContainsKey(m) && !serverData.mods.ContainsKey(m)).ToList();
+                        
+                        var modsToDownload = new List<string>();
+                        foreach (var kvp in serverData.mods)
+                        {
+                            var relPath = kvp.Key;
+                            var serverSize = kvp.Value;
+                            var fullPath = Path.Combine(cacheDir, relPath);
+                            var recyclePath = Path.Combine(recycleDir, relPath);
+                            var isRecycled = File.Exists(recyclePath);
+                            var localSize = File.Exists(fullPath) ? new FileInfo(fullPath).Length : -1L;
+                            
+                            bool needsDownload = (!localMods.Contains(relPath) || (serverSize != -1 && localSize != serverSize)) && !isRecycled;
+                            if (needsDownload)
+                            {
+                                modsToDownload.Add(relPath);
+                            }
+                        }
+
+                        int totalTasks = modsToUpload.Count + modsToDownload.Count;
+                        int completedTasks = 0;
+
+                        if (totalTasks == 0)
+                        {
+                            IsSynced = true;
+                            CurrentSyncProgress = 100;
+                        }
+                        else
+                        {
+                            IsSynced = false;
+                            CurrentSyncProgress = 0;
+                        }
+
                         // Upload missing local mods
                         foreach (var localMod in localMods.ToList())
                         {
@@ -134,8 +172,14 @@ namespace ModTogetherUniversal.Services
 
                             if (!serverData.mods.ContainsKey(localMod))
                             {
+                                CurrentActivity = $"Uploading {localMod}...";
+                                await HeartbeatAsync();
+                                
                                 var fullPath = Path.Combine(cacheDir, localMod);
                                 await UploadModAsync(fullPath, localMod);
+                                
+                                completedTasks++;
+                                CurrentSyncProgress = (int)((completedTasks * 100.0) / totalTasks);
                             }
                         }
 
@@ -176,10 +220,19 @@ namespace ModTogetherUniversal.Services
 
                             if (needsDownload)
                             {
+                                CurrentActivity = $"Downloading {Path.GetFileName(relPath)}...";
+                                await HeartbeatAsync();
+                                
                                 OnLog?.Invoke($"📥 Syncing mod from Host: {relPath}");
                                 await DownloadModAsync(relPath, cacheDir);
+                                
+                                completedTasks++;
+                                CurrentSyncProgress = (int)((completedTasks * 100.0) / totalTasks);
                             }
                         }
+
+                        CurrentActivity = "";
+                        await HeartbeatAsync();
                     }
                 }
                 catch (Exception ex)
@@ -232,6 +285,7 @@ namespace ModTogetherUniversal.Services
                     {
                         await fileStream.WriteAsync(buffer, 0, read);
                         totalRead += read;
+                        BandwidthTracker.AddDownloadedBytes(read);
                         
                         if (totalBytes != -1)
                         {
@@ -311,6 +365,14 @@ namespace ModTogetherUniversal.Services
     {
         public Dictionary<string, long> mods { get; set; } = new();
         public Dictionary<string, string> deleted_mods { get; set; } = new();
-        public List<string> active_users { get; set; } = new();
+        public List<UserSyncState> active_users { get; set; } = new();
+    }
+
+    public class UserSyncState
+    {
+        public string Username { get; set; } = "";
+        public bool IsSynced { get; set; }
+        public int SyncProgress { get; set; }
+        public string CurrentActivity { get; set; } = "";
     }
 }

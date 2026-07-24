@@ -24,7 +24,7 @@ namespace ModTogetherUniversal.Services
         public string HostUsername { get; set; } = "Host";
         public bool IsRunning => _app != null;
 
-        public ConcurrentDictionary<string, DateTime> ActiveUsers { get; } = new();
+        public ConcurrentDictionary<string, UserHealthState> ActiveUsers { get; } = new();
         public ConcurrentBag<string> KickedUsers { get; } = new();
         public ConcurrentDictionary<string, string> DeletedMods { get; } = new();
 
@@ -71,10 +71,16 @@ namespace ModTogetherUniversal.Services
             });
 
             // Endpoints
-            _app.MapPost("/heartbeat", (string username) =>
+            _app.MapPost("/heartbeat", (string username, bool? isSynced, int? syncProgress, string? currentActivity) =>
             {
                 if (KickedUsers.Contains(username)) return Results.Json(new { status = "kicked" });
-                ActiveUsers[username] = DateTime.UtcNow;
+                
+                var state = ActiveUsers.GetOrAdd(username, _ => new UserHealthState());
+                state.LastSeen = DateTime.UtcNow;
+                if (isSynced.HasValue) state.IsSynced = isSynced.Value;
+                if (syncProgress.HasValue) state.SyncProgress = syncProgress.Value;
+                if (currentActivity != null) state.CurrentActivity = currentActivity;
+                
                 return Results.Json(new { status = "ok" });
             });
 
@@ -110,8 +116,15 @@ namespace ModTogetherUniversal.Services
                     }
                 }
 
-                var activeUsersList = ActiveUsers.Keys.ToList();
-                activeUsersList.Add($"{HostUsername} (Host)");
+                var activeUsersList = ActiveUsers.Select(kvp => new UserSyncState 
+                { 
+                    Username = kvp.Key, 
+                    IsSynced = kvp.Value.IsSynced, 
+                    SyncProgress = kvp.Value.SyncProgress,
+                    CurrentActivity = kvp.Value.CurrentActivity
+                }).ToList();
+                
+                activeUsersList.Add(new UserSyncState { Username = $"{HostUsername} (Host)", IsSynced = true, SyncProgress = 100, CurrentActivity = "" });
 
                 return Results.Json(new 
                 { 
@@ -158,9 +171,10 @@ namespace ModTogetherUniversal.Services
                 var filePath = GetSafePath(HostDir, relPath);
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
                 {
-                    await file.CopyToAsync(stream);
+                    using var trackingStream = new TrackingStream(stream, BandwidthTracker.AddDownloadedBytes);
+                    await file.CopyToAsync(trackingStream);
                 }
 
                 // Remove from deleted mods if it was there
@@ -178,7 +192,9 @@ namespace ModTogetherUniversal.Services
                 var filePath = GetSafePath(HostDir, filepath);
                 if (!File.Exists(filePath)) return Results.NotFound();
                 
-                return Results.File(filePath, "application/octet-stream", Path.GetFileName(filePath));
+                var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+                var trackingStream = new TrackingStream(fileStream, BandwidthTracker.AddUploadedBytes);
+                return Results.Stream(trackingStream, "application/octet-stream", Path.GetFileName(filePath));
             });
 
             _cts = new CancellationTokenSource();
@@ -214,5 +230,13 @@ namespace ModTogetherUniversal.Services
             }
             return fullPath;
         }
+    }
+
+    public class UserHealthState
+    {
+        public DateTime LastSeen { get; set; } = DateTime.UtcNow;
+        public bool IsSynced { get; set; } = false;
+        public int SyncProgress { get; set; } = 0;
+        public string CurrentActivity { get; set; } = "";
     }
 }

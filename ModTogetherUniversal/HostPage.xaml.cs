@@ -74,15 +74,29 @@ namespace ModTogetherUniversal
                         {
                             if (MainWindow.Instance != null && MainWindow.Instance.UserList != null)
                             {
-                                var users = App.Server.ActiveUsers.Keys.ToList();
-                                users.Add($"{App.Server.HostUsername} (Host)");
+                                var users = App.Server.ActiveUsers.Select(kvp => new Services.UserSyncState 
+                                { 
+                                    Username = kvp.Key, 
+                                    IsSynced = kvp.Value.IsSynced, 
+                                    SyncProgress = kvp.Value.SyncProgress,
+                                    CurrentActivity = kvp.Value.CurrentActivity
+                                }).ToList();
+                                
+                                users.Add(new Services.UserSyncState 
+                                { 
+                                    Username = $"{App.Server.HostUsername} (Host)", 
+                                    IsSynced = true, 
+                                    SyncProgress = 100,
+                                    CurrentActivity = ""
+                                });
                                 
                                 MainWindow.Instance.UserList.Items.Clear();
                                 foreach (var u in users)
                                 {
                                     MainWindow.Instance.UserList.Items.Add(u);
                                 }
-                                MainWindow.Instance.LblUsers.Text = $"Connected Users: {users.Count}";
+                                int syncedCount = users.Count(u => u.IsSynced);
+                                MainWindow.Instance.LblUsers.Text = $"Party Readiness: {syncedCount}/{users.Count} Ready";
                                 MainWindow.Instance.UserList.Visibility = Visibility.Visible;
                             }
                         });
@@ -94,16 +108,61 @@ namespace ModTogetherUniversal
 
         private void LoadIps()
         {
+            CmbIp.Items.Clear();
             CmbIp.Items.Add("127.0.0.1 (Localhost)");
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
+
+            try
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                var interfaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+                foreach (var ni in interfaces)
                 {
-                    CmbIp.Items.Add(ip.ToString());
+                    if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                    if (ni.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Loopback) continue;
+
+                    var ipProps = ni.GetIPProperties();
+                    foreach (var addr in ipProps.UnicastAddresses)
+                    {
+                        if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                        {
+                            string ipStr = addr.Address.ToString();
+                            string label = GetInterfaceLabel(ni, ipStr);
+                            CmbIp.Items.Add($"{ipStr} ({label})");
+                        }
+                    }
                 }
             }
+            catch
+            {
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    if (ip.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        CmbIp.Items.Add(ip.ToString());
+                    }
+                }
+            }
+
             if (CmbIp.Items.Count > 0) CmbIp.SelectedIndex = 0;
+        }
+
+        private string GetInterfaceLabel(System.Net.NetworkInformation.NetworkInterface ni, string ip)
+        {
+            string name = ni.Name.ToLowerInvariant();
+            string desc = ni.Description.ToLowerInvariant();
+
+            if (name.Contains("zerotier") || desc.Contains("zerotier")) return "ZeroTier";
+            if (name.Contains("tailscale") || desc.Contains("tailscale")) return "Tailscale";
+            if (name.Contains("hamachi") || desc.Contains("hamachi")) return "Hamachi";
+            if (name.Contains("radmin") || desc.Contains("radmin")) return "Radmin VPN";
+            if (name.Contains("wireguard") || desc.Contains("wireguard")) return "WireGuard VPN";
+            if (name.Contains("openvpn") || desc.Contains("openvpn")) return "OpenVPN";
+            if (name.Contains("veth") || name.Contains("wsl") || desc.Contains("hyper-v")) return "WSL / Virtual";
+
+            if (ni.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Wireless80211) return "Wi-Fi LAN";
+            if (ni.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Ethernet) return "Ethernet LAN";
+
+            return ni.Name;
         }
 
         private void ToggleCustomPin_Changed(object sender, RoutedEventArgs e)
@@ -158,6 +217,7 @@ namespace ModTogetherUniversal
             System.IO.Directory.CreateDirectory(cacheDir);
 
             await App.Server.StartAsync(cacheDir, port, token);
+            App.Client.Configure("127.0.0.1", port, token, Environment.UserName);
             App.Watcher.Start(cacheDir);
             
             string username = Environment.UserName;

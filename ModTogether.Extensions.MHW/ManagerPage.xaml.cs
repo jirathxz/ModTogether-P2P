@@ -76,6 +76,7 @@ namespace ModTogether.Extensions.MHW
         }
 
         private bool _autoDetected = false;
+        private System.IO.FileSystemWatcher? _watcher;
         private System.Collections.Generic.List<ModItemData> _allModItems = new System.Collections.Generic.List<ModItemData>();
         private ObservableCollection<ModItemData> _modItems = new ObservableCollection<ModItemData>();
         private ObservableCollection<Models.ModTreeNode> _modTreeNodes = new ObservableCollection<Models.ModTreeNode>();
@@ -104,6 +105,30 @@ namespace ModTogether.Extensions.MHW
             
             string cacheDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "GameMods");
             if (!System.IO.Directory.Exists(cacheDir)) return;
+
+            if (_watcher == null)
+            {
+                _watcher = new System.IO.FileSystemWatcher(cacheDir)
+                {
+                    NotifyFilter = System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.LastWrite,
+                    IncludeSubdirectories = false,
+                    EnableRaisingEvents = true
+                };
+                
+                System.IO.FileSystemEventHandler handler = (s, e) => 
+                {
+                    Application.Current.Dispatcher.InvokeAsync(() => ScanMods());
+                };
+                System.IO.RenamedEventHandler renamedHandler = (s, e) =>
+                {
+                    Application.Current.Dispatcher.InvokeAsync(() => ScanMods());
+                };
+
+                _watcher.Created += handler;
+                _watcher.Deleted += handler;
+                _watcher.Changed += handler;
+                _watcher.Renamed += renamedHandler;
+            }
 
             if (App.Installer == null)
             {
@@ -984,6 +1009,92 @@ namespace ModTogether.Extensions.MHW
             }
 
             return rootNode;
+        }
+
+        private void MenuItem_OpenLocation_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.MenuItem menu && menu.DataContext is ModItemData mod)
+            {
+                try
+                {
+                    string cacheDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "GameMods");
+                    string sourceFile = System.IO.Path.Combine(cacheDir, mod.Filename);
+                    if (System.IO.File.Exists(sourceFile))
+                    {
+                        System.Diagnostics.Process.Start("explorer.exe", $"/select,\"{sourceFile}\"");
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Failed to open location:\n{ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void MenuItem_Backup_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.MenuItem menu && menu.DataContext is ModItemData mod)
+            {
+                try
+                {
+                    string cacheDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "GameMods");
+                    string sourceFile = System.IO.Path.Combine(cacheDir, mod.Filename);
+                    if (System.IO.File.Exists(sourceFile))
+                    {
+                        string backupDir = System.IO.Path.Combine(cacheDir, "Backups");
+                        System.IO.Directory.CreateDirectory(backupDir);
+                        string backupFile = System.IO.Path.Combine(backupDir, mod.Filename);
+                        System.IO.File.Copy(sourceFile, backupFile, true);
+                        System.Windows.MessageBox.Show($"Mod successfully backed up to:\n{backupFile}", "Backup Successful", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Failed to backup {mod.Filename}:\n{ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void MenuItem_Delete_Click(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.MenuItem menu && menu.DataContext is ModItemData mod)
+            {
+                var result = System.Windows.MessageBox.Show($"Are you sure you want to delete '{mod.Filename}'? It will be moved to the recycle bin and deleted for everyone else in the room.", 
+                    "Delete Mod", System.Windows.MessageBoxButton.YesNo, System.Windows.MessageBoxImage.Warning);
+                
+                if (result == System.Windows.MessageBoxResult.Yes)
+                {
+                    try
+                    {
+                        string cacheDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "GameMods");
+                        string sourceFile = System.IO.Path.Combine(cacheDir, mod.Filename);
+                        if (System.IO.File.Exists(sourceFile))
+                        {
+                            string recycleDir = System.IO.Path.Combine(cacheDir, ".recycle_mods");
+                            System.IO.Directory.CreateDirectory(recycleDir);
+                            string recyclePath = System.IO.Path.Combine(recycleDir, mod.Filename);
+                            System.IO.File.Move(sourceFile, recyclePath, true);
+                            
+                            if (App.Server != null && App.Server.IsRunning)
+                            {
+                                App.Server.DeletedMods.TryAdd(mod.Filename, App.Server.HostUsername);
+                            }
+                            else if (App.Client != null)
+                            {
+                                _ = App.Client.DeleteModAsync(mod.Filename);
+                            }
+
+                            // Refresh list locally
+                            _allModItems.Remove(mod);
+                            _modItems.Remove(mod);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        System.Windows.MessageBox.Show($"Failed to delete {mod.Filename}:\n{ex.Message}", "Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                    }
+                }
+            }
         }
 
         private static bool IsMhwFolder(string folderName)

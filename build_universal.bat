@@ -11,13 +11,19 @@ echo.
 
 cd /d "%~dp0\ModTogetherUniversal"
 
-:: Step 0: Ensure dist folder exists
+:: Step 0: Ensure dist folder exists and kill running instances
+echo [*] Checking and closing running instances...
+taskkill /F /IM ModTogether_Universal_Standalone_x64.exe /T >nul 2>&1
+taskkill /F /IM ModTogether_Universal_Lightweight_x64.exe /T >nul 2>&1
+taskkill /F /IM ModTogetherUniversal.exe /T >nul 2>&1
+
+if exist "*_wpftmp.csproj" del /Q "*_wpftmp.csproj" >nul 2>&1
 if not exist "..\dist" mkdir "..\dist"
 
 :: Step 1: Restore
 echo.
 echo [*] [1/3] Restoring project dependencies...
-dotnet restore
+dotnet restore "ModTogetherUniversal.csproj"
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] ERROR: Dependency restore failed!
@@ -29,7 +35,7 @@ echo [+] Restore completed successfully.
 echo.
 echo [*] [2/3] Building Standalone Edition (No .NET required, ~85MB)...
 echo     Running dotnet publish...
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=false -p:DebugType=none -p:DebugSymbols=false -o "..\dist\Portable" -v m
+dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=false -p:DebugType=none -p:DebugSymbols=false -o "..\dist\Portable" -v m
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] ERROR: Standalone build failed!
@@ -41,7 +47,7 @@ echo [+] Standalone build completed successfully.
 echo.
 echo [*] [3/3] Building Lightweight Edition (Requires .NET 8, ~10MB)...
 echo     Running dotnet publish...
-dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=false -p:DebugType=none -p:DebugSymbols=false -o "..\dist\Lightweight" -v m
+dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=false -p:DebugType=none -p:DebugSymbols=false -o "..\dist\Lightweight" -v m
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] ERROR: Lightweight build failed!

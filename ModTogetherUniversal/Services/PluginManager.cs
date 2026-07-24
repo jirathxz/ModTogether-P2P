@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -68,35 +68,55 @@ namespace ModTogetherUniversal.Services
             };
         }
 
-        private string GetExtensionsPath()
+        public string GetPluginsPath()
         {
-            string basePath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
-            string extPath = Path.Combine(basePath, "Extensions");
-            Directory.CreateDirectory(extPath);
-            return extPath;
+            string docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            string pluginsPath = Path.Combine(docsPath, "ModTogether", "Plugins");
+            Directory.CreateDirectory(pluginsPath);
+            return pluginsPath;
         }
 
         public void LoadPlugins()
         {
             LoadedPlugins.Clear();
-            string extPath = GetExtensionsPath();
+            string userPluginsPath = GetPluginsPath();
             string basePath = Path.GetDirectoryName(Environment.ProcessPath) ?? AppDomain.CurrentDomain.BaseDirectory;
+            string localPluginsPath = Path.Combine(basePath, "Plugins");
+            string localExtPath = Path.Combine(basePath, "Extensions");
 
             var dlls = new List<string>();
-            if (Directory.Exists(extPath))
-            {
-                dlls.AddRange(Directory.GetFiles(extPath, "*.dll", SearchOption.AllDirectories));
-            }
-            OnLog?.Invoke($"[DEBUG] basePath: {basePath}, extPath: {extPath}, dlls found: {dlls.Count}");
 
-            // Allow loading extensions from the root directory (useful for local debugging in VS)
-            foreach (var file in Directory.GetFiles(basePath, "ModTogether.Extensions.*.dll"))
+            // 1. Documents/ModTogether/Plugins
+            if (Directory.Exists(userPluginsPath))
             {
-                if (!dlls.Contains(file))
+                dlls.AddRange(Directory.GetFiles(userPluginsPath, "*.dll", SearchOption.AllDirectories));
+            }
+
+            // 2. Local Plugins folder
+            if (Directory.Exists(localPluginsPath))
+            {
+                foreach (var file in Directory.GetFiles(localPluginsPath, "*.dll", SearchOption.AllDirectories))
                 {
-                    dlls.Add(file);
+                    if (!dlls.Contains(file)) dlls.Add(file);
                 }
             }
+
+            // 3. Local Extensions folder
+            if (Directory.Exists(localExtPath))
+            {
+                foreach (var file in Directory.GetFiles(localExtPath, "*.dll", SearchOption.AllDirectories))
+                {
+                    if (!dlls.Contains(file)) dlls.Add(file);
+                }
+            }
+
+            // 4. Root directory (useful for local debugging in VS)
+            foreach (var file in Directory.GetFiles(basePath, "ModTogether.Extensions.*.dll"))
+            {
+                if (!dlls.Contains(file)) dlls.Add(file);
+            }
+
+            OnLog?.Invoke($"[DEBUG] basePath: {basePath}, userPluginsPath: {userPluginsPath}, dlls found: {dlls.Count}");
 
             var assembliesToProcess = new List<Assembly>();
 
@@ -117,10 +137,11 @@ namespace ModTogetherUniversal.Services
                         OnLog?.Invoke($"[DEBUG] Loaded {simpleName} via Assembly.Load(byte[])");
                         
                         // Register for WPF URI Resolution
-                        if (!_loadedAssemblies.ContainsKey(assembly.FullName))
+                        if (!string.IsNullOrEmpty(assembly.FullName) && !_loadedAssemblies.ContainsKey(assembly.FullName))
                         {
                             _loadedAssemblies[assembly.FullName] = assembly;
-                            _loadedAssemblies[assembly.GetName().Name!] = assembly;
+                            if (assembly.GetName().Name != null)
+                                _loadedAssemblies[assembly.GetName().Name!] = assembly;
                         }
                     }
                     catch (Exception ex)
@@ -186,7 +207,7 @@ namespace ModTogetherUniversal.Services
 
                         try
                         {
-                            object instance = Activator.CreateInstance(type);
+                            object? instance = Activator.CreateInstance(type);
                             if (instance != null)
                             {
                                 IModPlugin extension = instance as IModPlugin ?? new PluginProxy(instance);

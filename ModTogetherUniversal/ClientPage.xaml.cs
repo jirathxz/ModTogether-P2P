@@ -48,7 +48,7 @@ namespace ModTogetherUniversal
             }
         }
 
-        private void Client_OnUsersUpdate(System.Collections.Generic.List<string> users)
+        private void Client_OnUsersUpdate(System.Collections.Generic.List<Services.UserSyncState> users)
         {
             Application.Current.Dispatcher.Invoke(() => 
             {
@@ -59,7 +59,8 @@ namespace ModTogetherUniversal
                     {
                         MainWindow.Instance.UserList.Items.Add(u);
                     }
-                    MainWindow.Instance.LblUsers.Text = $"Connected Users: {users.Count}";
+                    int syncedCount = users.Count(u => u.IsSynced);
+                    MainWindow.Instance.LblUsers.Text = $"Party Readiness: {syncedCount}/{users.Count} Ready";
                     MainWindow.Instance.UserList.Visibility = Visibility.Visible;
                 }
             });

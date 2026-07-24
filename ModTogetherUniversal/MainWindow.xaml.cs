@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Windows;
 using Wpf.Ui.Controls;
 
@@ -38,6 +38,16 @@ namespace ModTogetherUniversal
                 ApplyTranslations();
                 ValidateGamePath();
             };
+            
+            Services.BandwidthTracker.OnSpeedUpdated += (up, down) =>
+            {
+                Dispatcher.Invoke(() => 
+                {
+                    TxtUploadSpeed.Text = FormatBytes(up) + "/s";
+                    TxtDownloadSpeed.Text = FormatBytes(down) + "/s";
+                });
+            };
+            Services.BandwidthTracker.Start();
             
             App.Updater.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
             App.Updater.OnUpdateAvailable += (version, assets) => 
@@ -114,14 +124,18 @@ namespace ModTogetherUniversal
             if (NavSettings != null) NavSettings.Content = Models.I18N.GetString("tab_settings", lang);
         }
 
+        private Dictionary<Wpf.Ui.Controls.NavigationViewItem, System.Windows.Controls.Page> _pluginPages = new();
+
         private void RootNavigation_SelectionChanged(Wpf.Ui.Controls.NavigationView sender, System.Windows.RoutedEventArgs args)
         {
             if (sender.SelectedItem is Wpf.Ui.Controls.NavigationViewItem navItem
                 && navItem.Tag?.ToString() == "DynamicPlugin"
-                && navItem.DataContext is System.Windows.Controls.Page pluginPage)
+                && _pluginPages.TryGetValue(navItem, out var pluginPage))
             {
                 // Set the plugin page for the DynamicPluginPage wrapper
                 DynamicPluginPage.CurrentPluginPage = pluginPage;
+                bool navResult = RootNavigation.Navigate(typeof(DynamicPluginPage));
+                Log($"[DEBUG] Navigation to DynamicPluginPage result: {navResult}");
             }
         }
 
@@ -234,6 +248,20 @@ namespace ModTogetherUniversal
             Dispatcher.Invoke(() => PbDownload.Value = value);
         }
         
+        private string FormatBytes(long bytes)
+        {
+            string[] suffix = { "B", "KB", "MB", "GB" };
+            int i = 0;
+            double dblSByte = bytes;
+            while (bytes / 1024 > 0)
+            {
+                dblSByte = bytes / 1024.0;
+                bytes /= 1024;
+                i++;
+            }
+            return $"{dblSByte:0.##} {suffix[i]}";
+        }
+        
         public void ReloadAllPlugins()
         {
             Dispatcher.Invoke(() =>
@@ -241,8 +269,8 @@ namespace ModTogetherUniversal
                 string gameDir = App.Settings.Current.GameDirectory;
                 Services.PluginManager.Instance.LoadPlugins();
                 
-                // Remove existing dynamic extension nav items
-                var itemsToRemove = new System.Collections.Generic.List<Wpf.Ui.Controls.NavigationViewItem>();
+                // Remove existing dynamic extension nav items and header
+                var itemsToRemove = new System.Collections.Generic.List<object>();
                 foreach (var item in RootNavigation.MenuItems)
                 {
                     if (item is Wpf.Ui.Controls.NavigationViewItem navItem 
@@ -250,9 +278,26 @@ namespace ModTogetherUniversal
                     {
                         itemsToRemove.Add(navItem);
                     }
+                    else if (item is Wpf.Ui.Controls.NavigationViewItemHeader headerItem 
+                             && headerItem.Tag?.ToString() == "DynamicPluginHeader")
+                    {
+                        itemsToRemove.Add(headerItem);
+                    }
                 }
                 foreach (var item in itemsToRemove)
                     RootNavigation.MenuItems.Remove(item);
+
+                _pluginPages.Clear();
+
+                if (Services.PluginManager.Instance.LoadedPlugins.Count > 0)
+                {
+                    var header = new Wpf.Ui.Controls.NavigationViewItemHeader
+                    {
+                        Text = "PLUGINS",
+                        Tag = "DynamicPluginHeader"
+                    };
+                    RootNavigation.MenuItems.Add(header);
+                }
 
                 // Add a nav item for every loaded extension (no game-path filter)
                 foreach (var ext in Services.PluginManager.Instance.LoadedPlugins)
@@ -277,8 +322,8 @@ namespace ModTogetherUniversal
                         TargetPageType = typeof(DynamicPluginPage)
                     };
 
-                    // Store the page instance in DataContext so we can retrieve it on click
-                    navItem.DataContext = pageInstance;
+                    // Store the page instance in the dictionary so we can retrieve it on click
+                    _pluginPages[navItem] = pageInstance;
 
                     navItem.IsEnabled = true;
                     RootNavigation.MenuItems.Add(navItem);

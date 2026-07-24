@@ -26,7 +26,52 @@ namespace ModTogetherUniversal.Models
         public string Size { get; set; } = string.Empty;
         public long SizeNum { get; set; }
         public SolidColorBrush? BackgroundColor { get; set; }
-        
+
+        private bool _hasConflict;
+        public bool HasConflict
+        {
+            get => _hasConflict;
+            set
+            {
+                if (_hasConflict != value)
+                {
+                    _hasConflict = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasConflict)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ConflictVisibility)));
+                }
+            }
+        }
+
+        private string _conflictWarningText = string.Empty;
+        public string ConflictWarningText
+        {
+            get => _conflictWarningText;
+            set
+            {
+                if (_conflictWarningText != value)
+                {
+                    _conflictWarningText = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ConflictWarningText)));
+                }
+            }
+        }
+
+        private int _priority;
+        public int Priority
+        {
+            get => _priority;
+            set
+            {
+                if (_priority != value)
+                {
+                    _priority = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Priority)));
+                }
+            }
+        }
+
+        public System.Windows.Visibility ConflictVisibility => HasConflict ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 }

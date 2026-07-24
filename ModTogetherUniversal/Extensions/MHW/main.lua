@@ -10,7 +10,7 @@ local File = luanet.import_type("System.IO.File")
 local ListString = luanet.import_type("System.Collections.Generic.List`1[System.String]")
 
 function getStatePath(gameDir)
-    return API:CombinePath(gameDir, "GameMods/mhw_installed_mods.json")
+    return API:CombinePath(gameDir, "mhw_installed_mods.json")
 end
 
 function loadState(gameDir)
