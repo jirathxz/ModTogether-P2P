@@ -143,4 +143,3 @@ ModTogether ถูกออกแบบเป็น **ชุดโปรแก�
 - **[WPF-UI (v3.0.4)](https://github.com/lepoco/wpfui):** Modern WinUI 3 controls and Fluent design elements.
 - **[ASP.NET Core Kestrel](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel):** High-speed embedded HTTP web server powering P2P transfers.
 - **[SharpCompress (v0.38.0)](https://github.com/adamhathcock/sharpcompress):** Robust archive extraction library for Zip, 7z, and Rar formats.
-- **[ModTogether.API]:** Extensible plugin API for Lua, JavaScript, and C# game extensions.
