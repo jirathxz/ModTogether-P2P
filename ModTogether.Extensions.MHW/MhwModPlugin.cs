@@ -262,7 +262,7 @@ namespace ModTogether.Extensions.MHW
     {
         public string Name => "MHW Mod Manager";
         public string TargetGame => "Monster Hunter: World";
-        public string Version => "1.0.0";
+        public string Version => "1.2.0";
         public string Description => "A powerful mod manager for Monster Hunter: World";
         public string Author => "jirathxz";
         public string NavigationIcon => "Games24";

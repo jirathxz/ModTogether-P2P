@@ -26,15 +26,18 @@ ModTogether is designed as a **Universal P2P Mod Management Suite** powered by a
 ### 🌟 Key Features
 - ⚡ **Real-Time P2P Sync:** Instant peer-to-peer file synchronization driven by embedded ASP.NET Core Kestrel HTTP streaming.
 - 🏠 **Unified Room Control:** Side-by-side Host (Create Session) & Client (Join Session) interface with 6-digit PIN authentication.
-- 📊 **Bandwidth Tracking & Live Progress:** Real-time speedometers and progress bars for Uploads, Downloads, and Mod extraction.
-- 🧩 **Plugin & Extension Manager:** Load and manage custom game extensions (C#, Lua, JS) seamlessly.
-- 🔍 **Mod Explorer:** Search and explore mods with Nexus Mods integration directly within the app.
+- 🎨 **Mod Presets & Profile Stashing:** Save/Load custom Mod Presets (`Documents/ModTogether/presets/`). Swapping presets safely stashes original active mods into `.stash` without data loss.
+- ♻️ **Smart Recycle Mods & SHA-256 P2P Optimization:** Tracks mod ownership in `mod_owners.json`. Automatically moves unreferenced mod files into `.recycle_mods` when players leave, and restores matching mods via SHA-256 integrity checks without duplicate downloads.
+- 👥 **User Ownership Badges:** Displays visual owner badges (e.g. `👤 Host`, `👥 Shared (Host, Player2)`) across Mod Explorer & Plugin Mod Libraries.
+- 🔒 **Session Lock Protection:** Strictly locks preset changing during active room sessions (Host/Client) to prevent major file synchronization conflicts.
+- 🧩 **Online Plugin Store & Extensions:** Direct integration with GitHub Releases for real compiled `.dll` plugin extensions with SHA verification.
+- 💾 **Session State Persistence:** Remembers last selected presets, ports, and interface states saved in `Documents/ModTogether/sessions/session.json`.
+- 📊 **Bandwidth Limiter & Live Progress:** Speed limit controls (Kbps) and real-time speedometers/progress bars.
+- 🎮 **Discord Rich Presence (RPC):** Live status updates on Discord showing room code, host status, and active player counts.
+- 🔍 **Mod Explorer:** Search and manage mods with explicit `⚡ Install Checked` and row-level `Install` buttons.
 - 📦 **Full Archive Support:** Native handling for `.zip`, `.7z` (including Solid LZMA2 archives), and `.rar` files.
-- 🗑️ **Smart Recycle Bin:** Deleted mods are moved to `.recycle_mods` across all peers for instant offline recovery.
 - 📁 **Conflict Detection:** Scans mod archives to detect potential file overlaps before installation.
 - 🌐 **Bilingual UI (English / Thai):** Instant language switching without restarting the app.
-- 🛡️ **Network Crash Protection:** Active LAN subnet discovery (ZeroTier, Radmin VPN, Hamachi) with WSAEACCES socket handling.
-- 🎨 **Windows 11 Native Design:** Modern Fluent aesthetic powered by `WPF-UI` (WinUI 3 design language).
 
 ### 🚀 Build Editions
 ModTogether provides **2 build editions**:

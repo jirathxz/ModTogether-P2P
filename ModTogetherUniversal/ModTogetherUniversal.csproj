@@ -23,9 +23,9 @@
     <Description>Real-time Peer-to-Peer Mod Synchronization &amp; Management Suite for PC Games</Description>
     <Company>jirathx</Company>
     <Copyright>Copyright © 2026 jirathx. Released under MIT License.</Copyright>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.2.0</Version>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

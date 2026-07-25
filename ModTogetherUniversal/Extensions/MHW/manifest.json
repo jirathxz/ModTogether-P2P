@@ -1,7 +1,7 @@
 {
   "id": "modtogether-mhw",
   "name": "Monster Hunter: World Mod Manager",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "author": "ModTogether",
   "description": "Standard extension for installing and managing nativePC mods for Monster Hunter: World.",
   "targetGame": "MonsterHunterWorld",
