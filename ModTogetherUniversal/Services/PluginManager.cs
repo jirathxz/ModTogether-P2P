@@ -140,7 +140,7 @@ namespace ModTogetherUniversal.Services
                                         $"⚠️ Security Verification Required!\n\n" +
                                         $"Plugin: {Path.GetFileName(file)}\n" +
                                         $"SHA256: {hash}\n\n" +
-                                        $"Do you trust and allow this extension plugin to run on your system?",
+                                        $"Do you trust and allow this plugin to run on your system?",
                                         "ModTogether Plugin Security",
                                         System.Windows.MessageBoxButton.YesNo,
                                         System.Windows.MessageBoxImage.Warning);
@@ -203,7 +203,7 @@ namespace ModTogetherUniversal.Services
                     var typesLog = new System.Text.StringBuilder();
                     typesLog.AppendLine($"Loaded assembly: {assembly.FullName}");
                     
-                    var extensionTypes = assembly.GetTypes()
+                    var pluginTypes = assembly.GetTypes()
                         .Where(t => 
                         {
                             bool assignable = typeof(IModPlugin).IsAssignableFrom(t) || t.GetInterfaces().Any(i => i.FullName == typeof(IModPlugin).FullName);
@@ -214,7 +214,7 @@ namespace ModTogetherUniversal.Services
                     string logPath = Path.Combine(basePath, "plugin_types_debug.log");
                     System.IO.File.WriteAllText(logPath, typesLog.ToString());
 
-                    foreach (var type in extensionTypes)
+                    foreach (var type in pluginTypes)
                     {
                         if (LoadedPlugins.Any(e => e.GetType() == type)) continue;
 
@@ -223,10 +223,10 @@ namespace ModTogetherUniversal.Services
                             object? instance = Activator.CreateInstance(type);
                             if (instance != null)
                             {
-                                IModPlugin extension = instance as IModPlugin ?? new PluginProxy(instance);
-                                extension.SetLanguage(App.Settings.Current.Language);
-                                LoadedPlugins.Add(extension);
-                                OnLog?.Invoke($"Loaded Extension: {extension.Name} v{extension.Version}");
+                                IModPlugin plugin = instance as IModPlugin ?? new PluginProxy(instance);
+                                plugin.SetLanguage(App.Settings.Current.Language);
+                                LoadedPlugins.Add(plugin);
+                                OnLog?.Invoke($"Loaded Plugin: {plugin.Name} v{plugin.Version}");
                             }
                         }
                         catch (Exception createEx)
@@ -237,7 +237,7 @@ namespace ModTogetherUniversal.Services
                 }
                 catch (Exception ex)
                 {
-                    string msg = $"Failed to process extension assembly {assembly.FullName}: {ex.GetType().Name} - {ex.Message}";
+                    string msg = $"Failed to process plugin assembly {assembly.FullName}: {ex.GetType().Name} - {ex.Message}";
                     if (ex is ReflectionTypeLoadException rtle)
                     {
                         foreach (var le in rtle.LoaderExceptions)

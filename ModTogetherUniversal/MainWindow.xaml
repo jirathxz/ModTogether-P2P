@@ -136,7 +136,7 @@
                     <Grid Margin="0,8,0,0">
                         <ui:Button Content="Disconnect" Icon="{ui:SymbolIcon Dismiss24}" x:Name="BtnDisconnect" IsEnabled="False" Click="BtnDisconnect_Click" />
                         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.0.1 - by jirathxz</Hyperlink>
+                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.2.0 - by jirathxz</Hyperlink>
                         </TextBlock>
                     </Grid>
                 </StackPanel>

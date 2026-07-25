@@ -63,17 +63,17 @@ echo.
 echo [*] Finalizing build and organizing output...
 ping 127.0.0.1 -n 2 > nul
 
-echo Building ModTogether.Extensions.MHW...
+echo Building ModTogether.Plugins.MHW Plugin...
 cd ..
-dotnet build "ModTogether.Extensions.MHW\ModTogether.Extensions.MHW.csproj" -c Release
+dotnet build "ModTogether.Plugins.MHW\ModTogether.Plugins.MHW.csproj" -c Release
 
 :: Create output subfolders
-if not exist "dist\Standalone\Extensions" mkdir "dist\Standalone\Extensions"
-if not exist "dist\Lightweight\Extensions" mkdir "dist\Lightweight\Extensions"
+if not exist "dist\Standalone\Plugins" mkdir "dist\Standalone\Plugins"
+if not exist "dist\Lightweight\Plugins" mkdir "dist\Lightweight\Plugins"
 
-:: Copy MHW extension DLL
-copy /Y "ModTogether.Extensions.MHW\bin\Release\net8.0-windows\ModTogether.Extensions.MHW.dll" "dist\Standalone\Extensions\" >nul
-copy /Y "ModTogether.Extensions.MHW\bin\Release\net8.0-windows\ModTogether.Extensions.MHW.dll" "dist\Lightweight\Extensions\" >nul
+:: Copy MHW plugin DLL
+copy /Y "ModTogether.Plugins.MHW\bin\Release\net8.0-windows\ModTogether.Plugins.MHW.dll" "dist\Standalone\Plugins\" >nul
+copy /Y "ModTogether.Plugins.MHW\bin\Release\net8.0-windows\ModTogether.Plugins.MHW.dll" "dist\Lightweight\Plugins\" >nul
 
 cd "ModTogetherUniversal"
 
@@ -87,11 +87,11 @@ if exist "..\dist\Lightweight\ModTogetherUniversal.exe" (
     move /y "..\dist\Lightweight\ModTogetherUniversal.exe" "..\dist\Lightweight\ModTogether_Universal_Lightweight_x64.exe" >nul
 )
 
-:: Copy Extensions assets to both folders
-xcopy /E /I /Y "Extensions" "..\dist\Standalone\Extensions" >nul
-xcopy /E /I /Y "Extensions" "..\dist\Lightweight\Extensions" >nul
-if exist "..\dist\Standalone\Extensions\ModTogether.API.dll" del /Q "..\dist\Standalone\Extensions\ModTogether.API.dll"
-if exist "..\dist\Lightweight\Extensions\ModTogether.API.dll" del /Q "..\dist\Lightweight\Extensions\ModTogether.API.dll"
+:: Copy Plugins assets to both folders
+xcopy /E /I /Y "Plugins" "..\dist\Standalone\Plugins" >nul
+xcopy /E /I /Y "Plugins" "..\dist\Lightweight\Plugins" >nul
+if exist "..\dist\Standalone\Plugins\ModTogether.API.dll" del /Q "..\dist\Standalone\Plugins\ModTogether.API.dll"
+if exist "..\dist\Lightweight\Plugins\ModTogether.API.dll" del /Q "..\dist\Lightweight\Plugins\ModTogether.API.dll"
 
 echo.
 echo =====================================================================

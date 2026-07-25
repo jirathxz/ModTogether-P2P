@@ -33,7 +33,7 @@
     <PackageReference Include="SharpCompress" Version="0.38.0" />
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Resource Include="Assets\**\*" />
-    <Content Include="Extensions\**\*">
+    <Content Include="Plugins\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -44,7 +44,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ModTogether.API\ModTogether.API.csproj" />
-    <ProjectReference Include="..\ModTogether.Extensions.MHW\ModTogether.Extensions.MHW.csproj" />
+    <ProjectReference Include="..\ModTogether.Plugins.MHW\ModTogether.Plugins.MHW.csproj" />
   </ItemGroup>
 
 </Project>

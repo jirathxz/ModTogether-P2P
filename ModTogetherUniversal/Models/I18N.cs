@@ -123,7 +123,41 @@ namespace ModTogetherUniversal.Models
                     {"lbl_error_log", "บันทึกข้อผิดพลาดลงไฟล์ (Error Log)"},
                     {"desc_error_log", "บันทึกประวัติข้อผิดพลาดรุนแรงลงไฟล์ error.log อัตโนมัติ"},
                     {"lbl_plugin_security", "ความปลอดภัยของปลั๊กอิน (Plugin Security Inspection)"},
-                    {"desc_plugin_security", "ตรวจสอบลายเซ็นดิจิทัล รหัส SHA-256 และสแกน API ที่เสี่ยงภัยก่อนโหลดปลั๊กอิน"}
+                    {"desc_plugin_security", "ตรวจสอบลายเซ็นดิจิทัล รหัส SHA-256 และสแกน API ที่เสี่ยงภัยก่อนโหลดปลั๊กอิน"},
+
+                    {"plugins_online_title", "🛒 คลังปลั๊กอินออนไลน์ / ที่เก็บข้อมูล"},
+                    {"plugins_installed_title", "🛡️ ปลั๊กอินที่ติดตั้ง & การตรวจสอบความปลอดภัย"},
+                    {"plugins_btn_check_update", "ตรวจสอบ & อัปเดตทั้งหมด"},
+                    {"plugins_btn_install", "ติดตั้งปลั๊กอิน"},
+                    {"plugins_btn_delete", "ลบปลั๊กอิน"},
+                    {"plugins_installed_badge", "✅ ติดตั้งแล้ว"},
+                    {"plugins_not_installed_badge", "ยังไม่ได้ติดตั้ง"},
+                    {"plugins_downloading", "กำลังดาวน์โหลด DLL จริง..."},
+                    {"plugins_no_dll_notice", "⚠️ ไม่พบไฟล์ปลั๊กอิน (.dll) ใน GitHub Release เวอร์ชันล่าสุด (หรือไม่มีไฟล์ .dll ถูกแนบไว้บนหน้า Release)"},
+
+                    {"explorer_btn_install_checked", "⚡ ติดตั้งที่เลือก"},
+                    {"explorer_btn_uninstall_checked", "❎ ถอนที่เลือก"},
+                    {"explorer_btn_check_all", "เลือกทั้งหมด"},
+                    {"explorer_btn_uncheck_all", "ยกเลิกเลือก"},
+                    {"explorer_btn_scan_conflicts", "สแกนไฟล์ทับซ้อน ⚔️"},
+                    {"explorer_btn_import", "นำเข้าม็อด"},
+                    {"explorer_btn_open_folder", "เปิดโฟลเดอร์ม็อด"},
+                    {"explorer_btn_refresh", "รีเฟรช"},
+                    {"explorer_btn_backup", "สำรองข้อมูลที่เลือก"},
+                    {"explorer_btn_delete", "ลบที่เลือก"},
+                    {"explorer_preset_label", "โปรไฟล์ม็อด Preset:"},
+                    {"explorer_preset_save", "บันทึกโปรไฟล์"},
+                    {"explorer_preset_delete", "ลบ"},
+                    {"explorer_preset_name_placeholder", "ชื่อโปรไฟล์ใหม่..."},
+
+                    {"preset_locked_title", "Preset ถูกล็อกขณะอยู่ในเซสชัน"},
+                    {"preset_locked_msg", "⚠️ ไม่สามารถเปลี่ยน Mod Preset ขณะที่มีเซสชันกำลังใช้งาน (กำลังโฮสต์หรือเข้าร่วม)\n\nกรุณาหยุดโฮสต์หรือตัดการเชื่อมต่อจากห้องก่อนเพื่อป้องกันข้อผิดพลาดในการซิงค์ไฟล์"},
+
+                    {"host_btn_unban", "ปลดแบน"},
+                    {"lbl_bandwidth_limit", "จำกัดความเร็ว (Bandwidth Limiter)"},
+                    {"desc_bandwidth_limit", "ตั้งค่าจำกัดความเร็วดาวน์โหลด/อัปโหลดสูงสุด (Kbps)"},
+                    {"lbl_discord_rpc", "Discord Rich Presence (RPC)"},
+                    {"desc_discord_rpc", "แสดงสถานะ ModTogether บนโปรไฟล์ Discord แบบ Real-time"}
                 }
             },
             {
@@ -241,7 +275,41 @@ namespace ModTogetherUniversal.Models
                     {"lbl_error_log", "Error Log File Writing"},
                     {"desc_error_log", "Automatically write crash tracebacks to error.log."},
                     {"lbl_plugin_security", "Plugin Security Verification"},
-                    {"desc_plugin_security", "Verify SHA-256 signatures and inspect plugin DLL bytecode before execution."}
+                    {"desc_plugin_security", "Verify SHA-256 signatures and inspect plugin DLL bytecode before execution."},
+
+                    {"plugins_online_title", "🛒 Online Plugin Store / Repository"},
+                    {"plugins_installed_title", "🛡️ Installed Plugins & Security Inspector"},
+                    {"plugins_btn_check_update", "Check & Update All"},
+                    {"plugins_btn_install", "Install Plugin"},
+                    {"plugins_btn_delete", "Delete Plugin"},
+                    {"plugins_installed_badge", "✅ Installed"},
+                    {"plugins_not_installed_badge", "Not Installed"},
+                    {"plugins_downloading", "Downloading Real DLL..."},
+                    {"plugins_no_dll_notice", "⚠️ No plugin files (.dll) found in the latest GitHub Release (or no .dll files were attached to the Release page)"},
+
+                    {"explorer_btn_install_checked", "⚡ Install Checked"},
+                    {"explorer_btn_uninstall_checked", "❎ Uninstall Checked"},
+                    {"explorer_btn_check_all", "Check All"},
+                    {"explorer_btn_uncheck_all", "Uncheck All"},
+                    {"explorer_btn_scan_conflicts", "Scan Conflicts ⚔️"},
+                    {"explorer_btn_import", "Import Mod"},
+                    {"explorer_btn_open_folder", "Open Mods Folder"},
+                    {"explorer_btn_refresh", "Refresh"},
+                    {"explorer_btn_backup", "Backup Checked"},
+                    {"explorer_btn_delete", "Delete Checked"},
+                    {"explorer_preset_label", "Mod Profile Preset:"},
+                    {"explorer_preset_save", "Save Profile"},
+                    {"explorer_preset_delete", "Delete"},
+                    {"explorer_preset_name_placeholder", "New Profile Name..."},
+
+                    {"preset_locked_title", "Preset Locked During Session"},
+                    {"preset_locked_msg", "⚠️ Changing Mod Presets is strictly locked while an active room session is in progress (Hosting or Joined).\n\nPlease stop hosting or disconnect from the room first to prevent critical synchronization errors."},
+
+                    {"host_btn_unban", "Unban"},
+                    {"lbl_bandwidth_limit", "Bandwidth Limiter"},
+                    {"desc_bandwidth_limit", "Set maximum download/upload speed limit (Kbps)"},
+                    {"lbl_discord_rpc", "Discord Rich Presence (RPC)"},
+                    {"desc_discord_rpc", "Show ModTogether status on Discord profile in real-time"}
                 }
             }
         };

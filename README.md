@@ -16,12 +16,12 @@
 > ## Disclaimer
 > This application is **NOT** a cheat, hack, or memory injection tool. It is strictly a "File Synchronization & Mod Management Tool" designed to copy mod files over a network between peers. Its sole purpose is to facilitate Co-op gaming by ensuring all players have identical mod files. It does not interact with game memory or bypass Anti-Cheat systems. The mechanism is functionally identical to sending files via Google Drive or Zip archives over chat, but fully automated and direct.
 
-### 📦 Modular Architecture & Game Extensions
+### 📦 Modular Architecture & Game Plugins
 
 ModTogether is designed as a **Universal P2P Mod Management Suite** powered by an extensible plugin architecture:
 - 🧩 **Core App (`ModTogetherUniversal`)**: C# .NET 8 WPF application providing the high-speed P2P engine, Room management, Mod Explorer, and WinUI 3 Fluent interface.
-- 🔌 **Extension Engine (`ModTogether.API`)**: Plugin API supporting game extensions written in C#, Lua, or JavaScript.
-- 🐉 **Monster Hunter World Extension (`ModTogether.Extensions.MHW`)**: Official extension featuring `nativePC` folder management, P2P sync, archive extraction, and file conflict detection.
+- 🔌 **Plugin Engine (`ModTogether.API`)**: Plugin API supporting game plugins written in C#, Lua, or JavaScript.
+- 🐉 **Monster Hunter World Plugin (`ModTogether.Plugins.MHW`)**: Official plugin featuring `nativePC` folder management, P2P sync, archive extraction, and file conflict detection.
 
 ### 🌟 Key Features
 - ⚡ **Real-Time P2P Sync:** Instant peer-to-peer file synchronization driven by embedded ASP.NET Core Kestrel HTTP streaming.
@@ -30,7 +30,7 @@ ModTogether is designed as a **Universal P2P Mod Management Suite** powered by a
 - ♻️ **Smart Recycle Mods & SHA-256 P2P Optimization:** Tracks mod ownership in `mod_owners.json`. Automatically moves unreferenced mod files into `.recycle_mods` when players leave, and restores matching mods via SHA-256 integrity checks without duplicate downloads.
 - 👥 **User Ownership Badges:** Displays visual owner badges (e.g. `👤 Host`, `👥 Shared (Host, Player2)`) across Mod Explorer & Plugin Mod Libraries.
 - 🔒 **Session Lock Protection:** Strictly locks preset changing during active room sessions (Host/Client) to prevent major file synchronization conflicts.
-- 🧩 **Online Plugin Store & Extensions:** Direct integration with GitHub Releases for real compiled `.dll` plugin extensions with SHA verification.
+- 🧩 **Online Plugin Store:** Direct integration with GitHub Releases for real compiled `.dll` plugins with SHA verification.
 - 💾 **Session State Persistence:** Remembers last selected presets, ports, and interface states saved in `Documents/ModTogether/sessions/session.json`.
 - 📊 **Bandwidth Limiter & Live Progress:** Speed limit controls (Kbps) and real-time speedometers/progress bars.
 - 🎮 **Discord Rich Presence (RPC):** Live status updates on Discord showing room code, host status, and active player counts.
@@ -51,10 +51,10 @@ ModTogether provides **2 build editions**:
 ### 🛠️ How to Build
 Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installed.
 1. Double-click `build_universal.bat` (or run `.\build_universal.bat` in Terminal).
-2. Output executables and extensions will be generated in the `dist` folder:
+2. Output executables and plugins will be generated in the `dist` folder:
    - `dist\ModTogether_Universal_Standalone_x64.exe`
    - `dist\ModTogether_Universal_Lightweight_x64.exe`
-   - `dist\Extensions\`
+   - `dist\Plugins\`
 
 ### 🛡️ Antivirus & Security Notice
 - Built using official Microsoft .NET 8 Single-File bundling with ReadyToRun (R2R) compilation and embedded debug symbols.
@@ -81,18 +81,18 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) installe
 > ## คำชี้แจงสำคัญ (Disclaimer)
 > โปรแกรมนี้ **ไม่ใช่** โปรแกรมช่วยเล่น (Cheat/Hack) หรือโปรแกรมแทรกแซงหน่วยความจำ (Memory Injection) ของตัวเกมแต่อย่างใด เป็นเพียงแค่ "เครื่องมือซิงค์และจัดการไฟล์ม็อด (File Synchronization & Mod Management Tool)" ที่ช่วยคัดลอกไฟล์จากเครื่องหนึ่งไปยังอีกเครื่องหนึ่งผ่านเครือข่าย เพื่อความสะดวกในการเล่นเกม Co-op ที่ต้องใช้ม็อดตรงกันเท่านั้น ไม่มีเจตนาในการละเมิดกฎกติกาหรือข้ามผ่านระบบ Anti-Cheat ของเกม การทำงานเทียบเท่ากับการส่งไฟล์ผ่าน Google Drive หรือบีบอัดไฟล์ Zip ส่งให้เพื่อนทางแชท เพียงแต่เป็นการทำงานให้อัตโนมัติและส่งหากันโดยตรงเท่านั้น
 
-### 📦 สถาปัตยกรรมระบบปลั๊กอิน (Modular Architecture & Game Extensions)
+### 📦 สถาปัตยกรรมระบบปลั๊กอิน (Modular Architecture & Game Plugins)
 
 ModTogether ถูกออกแบบเป็น **ชุดโปรแกรมซิงค์ม็อด P2P แบบเอนกประสงค์ (Universal Suite)** ที่ขับเคลื่อนด้วยระบบปลั๊กอินส่วนขยาย:
 - 🧩 **แอปพลิเคชันหลัก (`ModTogetherUniversal`)**: โปรแกรม C# .NET 8 WPF ที่ทำหน้าที่รันระบบ P2P, จัดการห้อง, Mod Explorer และหน้าต่าง WinUI 3 Fluent
 - 🔌 **ระบบส่วนขยาย (`ModTogether.API`)**: ระบบ API รองรับปลั๊กอินเสริมของแต่ละเกม พัฒนาได้ด้วย C#, Lua หรือ JavaScript
-- 🐉 **ส่วนขยาย Monster Hunter World (`ModTogether.Extensions.MHW`)**: ปลั๊กอินอย่างเป็นทางการสำหรับเกม MHW รองรับการจัดการโฟลเดอร์ `nativePC`, ซิงค์ P2P, คลายบีบอัดไฟล์ม็อด และตรวจจับไฟล์ทับซ้อน
+- 🐉 **ปลั๊กอิน Monster Hunter World (`ModTogether.Plugins.MHW`)**: ปลั๊กอินอย่างเป็นทางการสำหรับเกม MHW รองรับการจัดการโฟลเดอร์ `nativePC`, ซิงค์ P2P, คลายบีบอัดไฟล์ม็อด และตรวจจับไฟล์ทับซ้อน
 
 ### 🌟 จุดเด่นและฟีเจอร์หลัก
 - ⚡ **ซิงค์ม็อดเรียลไทม์ (Real-Time P2P Sync):** เมื่อโฮสต์เพิ่มม็อดใหม่ ระบบจะส่งไฟล์ไปให้เครื่องเพื่อนๆ ในห้องทันทีผ่านระบบ Kestrel HTTP Streaming
 - 🏠 **หน้าจัดการห้องรวม (Unified Room Page):** รวมหน้าสร้างห้อง (Host) และเข้าร่วมห้อง (Client) ไว้ในหน้าเดียว พร้อมระบบรหัส PIN 6 หลัก
 - 📊 **ติดตามความเร็ว & แถบสถานะเรียลไทม์ (Bandwidth Tracker & Live Progress):** วัดความเร็ว Upload/Download และแสดงสถานะการคลายบีบอัดแบบ Real-time
-- 🧩 **ระบบจัดการปลั๊กอิน (Plugin & Extension Manager):** โหลดและจัดการส่วนขยายประจำเกมต่างๆ (C#, Lua, JS) ได้อย่างง่ายดาย
+- 🧩 **ระบบจัดการปลั๊กอิน (Plugin Manager):** โหลดและจัดการปลั๊กอินประจำเกมต่างๆ (C#, Lua, JS) ได้อย่างง่ายดาย
 - 🔍 **ระบบสำรวจม็อด (Mod Explorer):** ค้นหาและดูรายละเอียดม็อดเชื่อมต่อกับ Nexus Mods ได้โดยตรงในโปรแกรม
 - 📦 **รองรับไฟล์บีบอัดทุกประเภท:** คลายบีบอัดไฟล์ `.zip`, `.7z` (รวมถึง Solid LZMA2 Archives) และ `.rar` ได้สมบูรณ์
 - 🗑️ **ถังขยะกู้ข้อมูลประหยัดอินเทอร์เน็ต (Smart Recycle Bin):** ไฟล์ที่โดนลบจะย้ายไปเก็บที่ `.recycle_mods` สามารถกู้คืนได้ทันทีโดยไม่ต้องโหลดใหม่
@@ -113,10 +113,10 @@ ModTogether ถูกออกแบบเป็น **ชุดโปรแก�
 ### 🛠️ วิธีการ Build โปรแกรม
 จำเป็นต้องมี [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) ติดตั้งบนเครื่องนักพัฒนา
 1. ดับเบิลคลิกไฟล์ `build_universal.bat` (หรือรัน `.\build_universal.bat` ใน Terminal)
-2. สคริปต์จะทำการ Restore Dependencies และ Build ทั้ง 2 เวอร์ชันพร้อม Extensions ออกมาในโฟลเดอร์ `dist`:
+2. สคริปต์จะทำการ Restore Dependencies และ Build ทั้ง 2 เวอร์ชันพร้อม Plugins ออกมาในโฟลเดอร์ `dist`:
    - `dist\ModTogether_Universal_Standalone_x64.exe`
    - `dist\ModTogether_Universal_Lightweight_x64.exe`
-   - `dist\Extensions\`
+   - `dist\Plugins\`
 
 ### 🛡️ ความปลอดภัยและการสแกนแอนตี้ไวรัส (Security & Antivirus Notice)
 - คอมไพล์ด้วยระบบ Single-File Bundling ทางการของ Microsoft .NET 8 ร่วมกับเทคโนโลยี ReadyToRun (R2R) และฝัง Debug Symbols (PDB) ในตัว
@@ -143,4 +143,4 @@ ModTogether ถูกออกแบบเป็น **ชุดโปรแก�
 - **[WPF-UI (v3.0.4)](https://github.com/lepoco/wpfui):** Modern WinUI 3 controls and Fluent design elements.
 - **[ASP.NET Core Kestrel](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel):** High-speed embedded HTTP web server powering P2P transfers.
 - **[SharpCompress (v0.38.0)](https://github.com/adamhathcock/sharpcompress):** Robust archive extraction library for Zip, 7z, and Rar formats.
-- **[ModTogether.API]:** Extensible plugin API for Lua, JavaScript, and C# game extensions.
+- **[ModTogether.API]:** Extensible plugin API for Lua, JavaScript, and C# game plugins.

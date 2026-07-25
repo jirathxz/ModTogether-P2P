@@ -28,7 +28,7 @@ namespace ModTogetherUniversal
             
             Loaded += (s, e) => 
             {
-                // Load extensions
+                // Load plugins
                 Services.PluginManager.Instance.OnLog += Log;
                 ReloadAllPlugins();
 
@@ -42,7 +42,6 @@ namespace ModTogetherUniversal
                 Services.DiscordRpcService.Instance.Initialize();
                 ApplyTranslations();
                 ValidateGamePath();
-                Task.Run(async () => await RunAllTests.RunVerificationAsync());
             };
             App.Settings.OnSettingsChanged += () => 
             {
@@ -309,7 +308,7 @@ namespace ModTogetherUniversal
                 string gameDir = App.Settings.Current.GameDirectory;
                 Services.PluginManager.Instance.LoadPlugins();
                 
-                // Remove existing dynamic extension nav items and header
+                // Remove existing dynamic plugin nav items and header
                 var itemsToRemove = new System.Collections.Generic.List<object>();
                 foreach (var item in RootNavigation.MenuItems)
                 {
@@ -342,7 +341,7 @@ namespace ModTogetherUniversal
                     RootNavigation.MenuItems.Add(header);
                 }
 
-                // Add a nav item for every loaded extension (no game-path filter)
+                // Add a nav item for every loaded plugin (no game-path filter)
                 foreach (var ext in Services.PluginManager.Instance.LoadedPlugins)
                 {
                     // Initialize with current game dir (empty string if not set)
@@ -446,7 +445,7 @@ namespace ModTogetherUniversal
             return isValid;
         }
 
-        public void RemoveExtensionTabByTitle(string title)
+        public void RemovePluginTabByTitle(string title)
         {
             Dispatcher.Invoke(() =>
             {

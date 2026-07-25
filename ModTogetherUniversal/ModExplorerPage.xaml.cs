@@ -174,7 +174,7 @@ namespace ModTogetherUniversal
                 if (CardPluginNotice != null && TxtPluginNotice != null)
                 {
                     CardPluginNotice.Visibility = Visibility.Visible;
-                    TxtPluginNotice.Text = $"⚡ Dedicated Extension Plugin ({activePlugin.Name}) Active: Mod installation for this game is managed by the plugin. Please use the '{activePlugin.Name}' tab in the navigation menu to install and manage mods.";
+                    TxtPluginNotice.Text = $"⚡ Dedicated Plugin ({activePlugin.Name}) Active: Mod installation for this game is managed by the plugin. Please use the '{activePlugin.Name}' tab in the navigation menu to install and manage mods.";
                 }
             }
             else
@@ -226,8 +226,8 @@ namespace ModTogetherUniversal
             if (!IsInstallAllowed)
             {
                 var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
-                string pName = plugin?.Name ?? "Extension Plugin";
-                MessageBox.Show($"Mod installation for this game is managed by the '{pName}' extension plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
+                string pName = plugin?.Name ?? "Plugin";
+                MessageBox.Show($"Mod installation for this game is managed by the '{pName}' plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
@@ -360,8 +360,8 @@ namespace ModTogetherUniversal
             if (!IsInstallAllowed)
             {
                 var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
-                string pName = plugin?.Name ?? "Extension Plugin";
-                MessageBox.Show($"Mod installation for this game is managed by the '{pName}' extension plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
+                string pName = plugin?.Name ?? "Plugin";
+                MessageBox.Show($"Mod installation for this game is managed by the '{pName}' plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
                 if (sender is CheckBox targetChk) targetChk.IsChecked = false;
                 return;
             }
