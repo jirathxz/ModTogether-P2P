@@ -324,6 +324,7 @@ namespace ModTogetherUniversal.Services
     {
         private readonly object _instance;
         private readonly Type _type;
+        public Type OriginalType => _type;
 
         public PluginProxy(object instance)
         {

@@ -23,7 +23,7 @@ namespace ModTogetherUniversal
             if (BtnOpenFolder != null) BtnOpenFolder.Content = Models.I18N.GetString("plugins_btn_open", lang);
             if (BtnReloadPlugins != null) BtnReloadPlugins.Content = Models.I18N.GetString("plugins_btn_reload", lang);
             if (BtnCheckUpdates != null) BtnCheckUpdates.Content = Models.I18N.GetString("plugins_btn_check_update", lang);
-            if (TxtOnlineTitle != null) TxtOnlineTitle.Text = Models.I18N.GetString("plugins_online_title", lang);
+            if (ExpOnlineStore != null) ExpOnlineStore.Header = Models.I18N.GetString("plugins_online_title", lang);
             if (TxtInstalledTitle != null) TxtInstalledTitle.Text = Models.I18N.GetString("plugins_installed_title", lang);
             if (TxtNoPluginsNotice != null) TxtNoPluginsNotice.Text = Models.I18N.GetString("plugins_no_dll_notice", lang);
         }
@@ -130,6 +130,58 @@ namespace ModTogetherUniversal
                             MessageBox.Show($"❌ Failed to delete plugin: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
+                }
+            }
+        }
+
+        private void BtnDeleteInstalledPlugin_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is ModTogether.API.IModPlugin plugin)
+            {
+                Type pType = plugin.GetType();
+                if (plugin is PluginProxy proxy)
+                {
+                    pType = proxy.OriginalType;
+                }
+                
+                string asmName = pType.Assembly.GetName().Name ?? "";
+                if (string.IsNullOrEmpty(asmName)) return;
+
+                string dllFileName = asmName + ".dll";
+                var pluginsDir = PluginManager.Instance.GetPluginsPath();
+                string targetFile = Path.Combine(pluginsDir, dllFileName);
+
+                if (File.Exists(targetFile))
+                {
+                    var result = MessageBox.Show(
+                        $"Are you sure you want to delete installed plugin '{plugin.Name}'?\n\nFile: {dllFileName}\n\nNote: This will delete the DLL file. Some plugin tabs may remain until you restart the app.",
+                        "Delete Plugin", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        try
+                        {
+                            File.Delete(targetFile);
+                            MessageBox.Show($"🗑️ Plugin '{plugin.Name}' deleted successfully.", "Plugin Deleted", MessageBoxButton.OK, MessageBoxImage.Information);
+                            
+                            // Remove from loaded list immediately to update UI
+                            PluginManager.Instance.LoadedPlugins.Remove(plugin);
+                            if (Application.Current.MainWindow is MainWindow mainWindow)
+                            {
+                                mainWindow.RemovePluginTabByTitle(plugin.Name);
+                            }
+                            
+                            RefreshPluginList();
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show($"❌ Failed to delete plugin: {ex.Message}\nMake sure it's not being actively used.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                }
+                else
+                {
+                    MessageBox.Show($"❌ Could not find plugin DLL file: {dllFileName}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
         }

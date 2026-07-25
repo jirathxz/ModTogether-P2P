@@ -12,7 +12,7 @@ namespace ModTogetherUniversal.Services
     {
         private const string RepoOwner = "jirathxz";
         private const string RepoName = "ModTogether-P2P";
-        public const string CurrentVersion = "v1.0.1"; 
+        public const string CurrentVersion = "v1.2.0"; 
 
         public event Action<string, System.Collections.Generic.List<(string Name, string Url)>>? OnUpdateAvailable; // version, assets
         public event Action<string>? OnLog;

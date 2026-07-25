@@ -34,14 +34,15 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
             <StackPanel>
                 <!-- Online Plugin Store Section -->
-                <TextBlock x:Name="TxtOnlineTitle" Text="🛒 Online Plugin Store / Repository" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <ui:Card x:Name="CardNoPluginsNotice" Visibility="Collapsed" Margin="0,0,0,16" Padding="14" Background="#15FF9900" BorderBrush="Orange" BorderThickness="1">
-                    <StackPanel Orientation="Horizontal">
-                        <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Margin="0,0,10,0" VerticalAlignment="Center" />
-                        <TextBlock x:Name="TxtNoPluginsNotice" Text="⚠️ ไม่พบไฟล์ปลั๊กอิน (.dll) ใน GitHub Release เวอร์ชันล่าสุด" VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                    </StackPanel>
-                </ui:Card>
-                <ItemsControl x:Name="ItemsOnlineStore" Margin="0,0,0,24">
+                <Expander x:Name="ExpOnlineStore" Header="🛒 Online Plugin Store / Repository" IsExpanded="False" Margin="0,0,0,24">
+                    <StackPanel>
+                        <ui:Card x:Name="CardNoPluginsNotice" Visibility="Collapsed" Margin="0,0,0,16" Padding="14" Background="#15FF9900" BorderBrush="Orange" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                <TextBlock x:Name="TxtNoPluginsNotice" Text="⚠️ ไม่พบไฟล์ปลั๊กอิน (.dll) ใน GitHub Release เวอร์ชันล่าสุด" VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </StackPanel>
+                        </ui:Card>
+                        <ItemsControl x:Name="ItemsOnlineStore">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ui:Card Margin="0,0,0,10" Padding="16">
@@ -62,14 +63,15 @@
                                         <TextBlock Text="{Binding Permissions, StringFormat='Permissions: {0}'}" FontSize="12" Foreground="LightBlue" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
-                                        <ui:Button Content="Install Plugin" Icon="{ui:SymbolIcon ArrowDownload24}" Tag="{Binding}" Click="BtnInstallStorePlugin_Click" Appearance="Primary" Padding="12,6" Margin="0,0,0,4" />
-                                        <ui:Button Content="Delete Plugin" Icon="{ui:SymbolIcon Delete24}" Tag="{Binding}" Click="BtnDeleteStorePlugin_Click" Appearance="Danger" Padding="12,6" Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisConverter}}" />
+                                        <ui:Button Content="Install Plugin" Icon="{ui:SymbolIcon ArrowDownload24}" Tag="{Binding}" Click="BtnInstallStorePlugin_Click" Appearance="Primary" Padding="12,6" />
                                     </StackPanel>
                                 </Grid>
                             </ui:Card>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                        </ItemsControl>
+                    </StackPanel>
+                </Expander>
 
                 <!-- Installed Plugins & Security Inspector Section -->
                 <TextBlock x:Name="TxtInstalledTitle" Text="🛡️ Installed Plugins &amp; Security Inspector" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
@@ -94,6 +96,9 @@
                                             <TextBlock Text="Permissions: 📁 Disk Access, 🌐 P2P Sync, ⚙️ Game API" FontSize="12" Foreground="LightBlue" Margin="0,0,16,0" />
                                             <TextBlock Text="{Binding Author, StringFormat='Author: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
                                         </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+                                        <ui:Button Content="Delete Plugin" Icon="{ui:SymbolIcon Delete24}" Tag="{Binding}" Click="BtnDeleteInstalledPlugin_Click" Appearance="Danger" Padding="12,6" />
                                     </StackPanel>
                                 </Grid>
                             </ui:Card>
