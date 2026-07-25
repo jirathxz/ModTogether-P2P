@@ -42,7 +42,9 @@
         </Border>
 
         <ui:NavigationView x:Name="RootNavigation" Grid.Row="2" PaneDisplayMode="Left" 
-                           SelectionChanged="RootNavigation_SelectionChanged">
+                           SelectionChanged="RootNavigation_SelectionChanged"
+                           ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                           ScrollViewer.CanContentScroll="False">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem x:Name="NavRoom" Content="Room (Host / Join)" Icon="{ui:SymbolIcon People24}" TargetPageType="{x:Type local:RoomPage}" />
                 <ui:NavigationViewItem x:Name="NavExplorer" Content="Mod Explorer" Icon="{ui:SymbolIcon FolderZip24}" TargetPageType="{x:Type local:ModExplorerPage}" />

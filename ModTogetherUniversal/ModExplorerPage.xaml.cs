@@ -112,7 +112,21 @@ namespace ModTogetherUniversal
         public ModExplorerPage()
         {
             InitializeComponent();
-            DataContext = this;
+            this.Loaded += (s, e) =>
+            {
+                // Disable the ancestor ScrollViewer (from NavigationView) to fix infinite height overflow
+                var parent = System.Windows.Media.VisualTreeHelper.GetParent(this);
+                while (parent != null)
+                {
+                    if (parent is ScrollViewer sv)
+                    {
+                        sv.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                        break;
+                    }
+                    parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+                }
+            };
+            this.DataContext = this;
             ListMods.ItemsSource = _modItems;
 
             Loaded += (s, e) =>
@@ -369,7 +383,7 @@ namespace ModTogetherUniversal
             RefreshModsList();
         }
 
-        private void Mod_Checked(object sender, RoutedEventArgs e)
+        private async void Mod_Checked(object sender, RoutedEventArgs e)
         {
             if (!IsInstallAllowed)
             {
@@ -394,78 +408,104 @@ namespace ModTogetherUniversal
                 string sourceFile = Path.Combine(ModsDirectory, mod.Filename);
                 if (!File.Exists(sourceFile)) return;
 
+                chk.IsEnabled = false;
+                var loadingRing = this.FindName("LoadingRing") as Wpf.Ui.Controls.ProgressRing;
+                if (loadingRing != null) loadingRing.Visibility = Visibility.Visible;
+                TxtStatus.Text = $"Processing: {mod.Filename}...";
+
                 try
                 {
-                    if (CmbInstallType.SelectedIndex == 0) // Single File
+                    await Task.Run(() =>
                     {
-                        string destFile = Path.Combine(targetDir, mod.Filename);
-                        File.Copy(sourceFile, destFile, true);
-                        TxtStatus.Text = $"Installed: {mod.Filename}";
-                    }
-                    else // Extract File
-                    {
-                        if (sourceFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                        if (CmbInstallType.SelectedIndex == 0) // Single File
                         {
-                            ZipFile.ExtractToDirectory(sourceFile, targetDir, true);
-                            TxtStatus.Text = $"Extracted: {mod.Filename}";
+                            string destFile = Path.Combine(targetDir, mod.Filename);
+                            File.Copy(sourceFile, destFile, true);
                         }
-                        else
+                        else // Extract File
                         {
-                            MessageBox.Show("Only .zip files are supported for extraction.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
-                            chk.IsChecked = false;
+                            if (sourceFile.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ZipFile.ExtractToDirectory(sourceFile, targetDir, true);
+                            }
+                            else
+                            {
+                                Application.Current.Dispatcher.Invoke(() => MessageBox.Show("Only .zip files are supported for extraction.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning));
+                                Application.Current.Dispatcher.Invoke(() => chk.IsChecked = false);
+                            }
                         }
-                    }
+                    });
+
+                    TxtStatus.Text = CmbInstallType.SelectedIndex == 0 ? $"Installed: {mod.Filename}" : $"Extracted: {mod.Filename}";
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Failed to install mod: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     chk.IsChecked = false;
                 }
+                finally
+                {
+                    chk.IsEnabled = true;
+                    if (loadingRing != null) loadingRing.Visibility = Visibility.Collapsed;
+                }
             }
         }
 
-        private void Mod_Unchecked(object sender, RoutedEventArgs e)
+        private async void Mod_Unchecked(object sender, RoutedEventArgs e)
         {
             if (sender is CheckBox chk && chk.DataContext is ModItemData mod)
             {
                 string targetDir = TargetDirectory;
                 if (string.IsNullOrWhiteSpace(targetDir) || !Directory.Exists(targetDir)) return;
 
+                chk.IsEnabled = false;
+                var loadingRing = this.FindName("LoadingRing") as Wpf.Ui.Controls.ProgressRing;
+                if (loadingRing != null) loadingRing.Visibility = Visibility.Visible;
+                TxtStatus.Text = $"Removing: {mod.Filename}...";
+
                 try
                 {
-                    if (CmbInstallType.SelectedIndex == 0) // Single File
+                    await Task.Run(() =>
                     {
-                        string destFile = Path.Combine(targetDir, mod.Filename);
-                        if (File.Exists(destFile))
+                        if (CmbInstallType.SelectedIndex == 0) // Single File
                         {
-                            File.Delete(destFile);
-                            TxtStatus.Text = $"Uninstalled: {mod.Filename}";
-                        }
-                    }
-                    else // Extract File
-                    {
-                        if (mod.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
-                        {
-                            string sourceFile = Path.Combine(ModsDirectory, mod.Filename);
-                            if (File.Exists(sourceFile))
+                            string destFile = Path.Combine(targetDir, mod.Filename);
+                            if (File.Exists(destFile))
                             {
-                                using var archive = ZipFile.OpenRead(sourceFile);
-                                foreach (var entry in archive.Entries)
-                                {
-                                    if (string.IsNullOrEmpty(entry.Name)) continue;
-                                    string destFile = Path.Combine(targetDir, entry.FullName);
-                                    if (File.Exists(destFile))
-                                        File.Delete(destFile);
-                                }
-                                TxtStatus.Text = $"Uninstalled: {mod.Filename}";
+                                File.Delete(destFile);
                             }
                         }
-                    }
+                        else // Extract File
+                        {
+                            if (mod.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                            {
+                                string sourceFile = Path.Combine(ModsDirectory, mod.Filename);
+                                if (File.Exists(sourceFile))
+                                {
+                                    using var archive = ZipFile.OpenRead(sourceFile);
+                                    foreach (var entry in archive.Entries)
+                                    {
+                                        if (string.IsNullOrEmpty(entry.Name)) continue;
+                                        string destFile = Path.Combine(targetDir, entry.FullName);
+                                        if (File.Exists(destFile))
+                                            File.Delete(destFile);
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    TxtStatus.Text = $"Uninstalled: {mod.Filename}";
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show($"Failed to uninstall {mod.Filename}:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     chk.IsChecked = true; // Revert
+                }
+                finally
+                {
+                    chk.IsEnabled = true;
+                    if (loadingRing != null) loadingRing.Visibility = Visibility.Collapsed;
                 }
             }
         }
@@ -481,36 +521,43 @@ namespace ModTogetherUniversal
             {
                 Directory.CreateDirectory(ModsDirectory);
                 int imported = 0;
-                foreach (var file in dialog.FileNames)
-                {
-                    try
-                    {
-                        string fileName = Path.GetFileName(file);
-                        string dest = Path.Combine(ModsDirectory, fileName);
-                        File.Copy(file, dest, true);
-                        imported++;
+                
+                var loadingRing = this.FindName("LoadingRing") as Wpf.Ui.Controls.ProgressRing;
+                if (loadingRing != null) loadingRing.Visibility = Visibility.Visible;
+                TxtStatus.Text = $"Importing {dialog.FileNames.Length} file(s)...";
 
-                        // Trigger P2P sync for room
-                        if (App.Server != null && App.Server.IsRunning)
-                        {
-                            App.Server.DeletedMods.TryRemove(fileName, out _);
-                            App.Server.TriggerCacheRefresh();
-                        }
-                        else if (App.Client != null && App.Client.IsConnected)
-                        {
-                            await App.Client.UploadModAsync(dest, fileName);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show($"Failed to import {Path.GetFileName(file)}: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                    }
-                }
-                if (imported > 0)
+                await Task.Run(async () =>
                 {
-                    TxtStatus.Text = $"Imported & Synced {imported} mod(s).";
-                    RefreshModsList();
-                }
+                    foreach (var file in dialog.FileNames)
+                    {
+                        try
+                        {
+                            string fileName = Path.GetFileName(file);
+                            string dest = Path.Combine(ModsDirectory, fileName);
+                            File.Copy(file, dest, true);
+                            imported++;
+    
+                            // Trigger P2P sync for room
+                            if (App.Server != null && App.Server.IsRunning)
+                            {
+                                App.Server.DeletedMods.TryRemove(fileName, out _);
+                                App.Server.TriggerCacheRefresh();
+                            }
+                            else if (App.Client != null && App.Client.IsConnected)
+                            {
+                                await App.Client.UploadModAsync(dest, fileName);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Application.Current.Dispatcher.Invoke(() => MessageBox.Show($"Failed to import {Path.GetFileName(file)}: {ex.Message}", "Import Error", MessageBoxButton.OK, MessageBoxImage.Error));
+                        }
+                    }
+                });
+
+                if (loadingRing != null) loadingRing.Visibility = Visibility.Collapsed;
+                TxtStatus.Text = $"Imported {imported} file(s).";
+                RefreshModsList();
             }
         }
 

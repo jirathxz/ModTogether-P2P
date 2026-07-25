@@ -28,6 +28,13 @@ namespace ModTogetherUniversal
             
             Loaded += (s, e) => 
             {
+                // Disable ScrollViewer inside NavigationView to fix overflow issues
+                var sv = FindVisualChild<System.Windows.Controls.ScrollViewer>(RootNavigation);
+                if (sv != null)
+                {
+                    sv.VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Disabled;
+                }
+
                 // Load plugins
                 Services.PluginManager.Instance.OnLog += Log;
                 ReloadAllPlugins();
@@ -125,7 +132,58 @@ namespace ModTogetherUniversal
                 {
                     ValidateGamePath();
                 });
+                
+                // Dump visual tree after 5 seconds to debug layout
+                Dispatcher.InvokeAsync(async () => 
+                {
+                    RootNavigation.Navigate(typeof(ModTogether.Plugins.MHW.ManagerPage));
+                    await System.Threading.Tasks.Task.Delay(5000);
+                    try {
+                        var logPath = @"C:\Users\jirathx\Desktop\ModTogether\visual_tree.txt";
+                        using (var writer = new System.IO.StreamWriter(logPath))
+                        {
+                            DumpVisualTree(this, 0, writer);
+                        }
+                    } catch { }
+                });
             });
+        }
+
+        private void DumpVisualTree(DependencyObject obj, int depth, System.IO.StreamWriter writer)
+        {
+            if (obj == null) return;
+            string indent = new string(' ', depth * 2);
+            string info = $"{indent}{obj.GetType().Name}";
+            if (obj is FrameworkElement fe)
+            {
+                info += $" [ActualHeight={fe.ActualHeight}, DesiredSize={fe.DesiredSize.Height}, Margin={fe.Margin}]";
+            }
+            if (obj is System.Windows.Controls.ScrollViewer sv)
+            {
+                info += $" (ViewportHeight={sv.ViewportHeight}, ExtentHeight={sv.ExtentHeight}, VertScrollBarVisibility={sv.VerticalScrollBarVisibility})";
+            }
+            writer.WriteLine(info);
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                DumpVisualTree(System.Windows.Media.VisualTreeHelper.GetChild(obj, i), depth + 1, writer);
+            }
+        }
+
+        private static T? FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child != null && child is T t)
+                    return t;
+                else
+                {
+                    T? childOfChild = FindVisualChild<T>(child!);
+                    if (childOfChild != null)
+                        return childOfChild;
+                }
+            }
+            return null;
         }
 
         public void ApplyTranslations()

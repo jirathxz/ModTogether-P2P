@@ -42,7 +42,7 @@
         </ContextMenu>
     </Page.Resources>
 
-    <Grid Margin="24" Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=ui:NavigationView}}">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -130,7 +130,7 @@
                 <TextBlock x:Name="TxtStatus" VerticalAlignment="Center" Margin="8,0,0,4" Foreground="Gray" />
             </WrapPanel>
 
-            <ListView Grid.Row="1" x:Name="ListMods" SelectionMode="Single" Background="Transparent" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" AlternationCount="2">
+            <ListView Grid.Row="1" x:Name="ListMods" SelectionMode="Single" Background="Transparent" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" AlternationCount="2" VirtualizingPanel.ScrollUnit="Pixel">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="{x:Type ListViewItem}">
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
@@ -228,6 +228,8 @@
                     </GridView>
                 </ListView.View>
             </ListView>
+
+            <ui:ProgressRing x:Name="LoadingRing" Visibility="Collapsed" IsIndeterminate="True" Width="64" Height="64" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
         </Grid>
     </Grid>
 </Page>

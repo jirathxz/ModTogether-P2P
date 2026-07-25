@@ -90,6 +90,8 @@ namespace ModTogetherUniversal.Models
                     {"theme_light", "สว่าง (Light)"},
                     {"theme_dark", "มืด (Dark)"},
                     {"theme_system", "ตามระบบ (System)"},
+                    {"lbl_custom_color", "สีเน้นธีมแบบกำหนดเอง (Custom Accent Color)"},
+                    {"desc_custom_color", "เลือกพาเลตต์สีหรือพิมพ์รหัสสี Hex (เช่น #0078D4, #8E8CD8) เพื่อเปลี่ยนสีของธีมโปรแกรม"},
 
                     {"tab_explorer", "จัดการม็อดทั่วไป (Mod Explorer)"},
                     {"tab_plugins", "ปลั๊กอิน (Plugins)"},
@@ -241,6 +243,8 @@ namespace ModTogetherUniversal.Models
                     {"theme_light", "Light"},
                     {"theme_dark", "Dark"},
                     {"theme_system", "System"},
+                    {"lbl_custom_color", "Custom Accent Color Theme"},
+                    {"desc_custom_color", "Select a color preset or enter a Hex color code (e.g. #0078D4, #8E8CD8) to customize the application theme."},
 
                     {"tab_explorer", "Mod Explorer"},
                     {"tab_plugins", "Plugins"},

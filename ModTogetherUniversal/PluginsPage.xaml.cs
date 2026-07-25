@@ -11,6 +11,20 @@ namespace ModTogetherUniversal
         public PluginsPage()
         {
             InitializeComponent();
+            this.Loaded += (s, e) =>
+            {
+                // Disable the ancestor ScrollViewer (from NavigationView) to fix infinite height overflow
+                var parent = System.Windows.Media.VisualTreeHelper.GetParent(this);
+                while (parent != null)
+                {
+                    if (parent is ScrollViewer sv)
+                    {
+                        sv.VerticalScrollBarVisibility = ScrollBarVisibility.Disabled;
+                        break;
+                    }
+                    parent = System.Windows.Media.VisualTreeHelper.GetParent(parent);
+                }
+            };
             this.Loaded += PluginsPage_Loaded;
             App.Settings.OnSettingsChanged += ApplyTranslations;
         }

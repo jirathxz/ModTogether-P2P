@@ -75,7 +75,7 @@
 
                 <!-- Installed Plugins & Security Inspector Section -->
                 <TextBlock x:Name="TxtInstalledTitle" Text="🛡️ Installed Plugins &amp; Security Inspector" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <ui:ListView x:Name="ListInstalledPlugins" SelectionMode="Single" Background="Transparent" BorderThickness="0">
+                <ui:ListView x:Name="ListInstalledPlugins" SelectionMode="Single" Background="Transparent" BorderThickness="0" VirtualizingPanel.ScrollUnit="Pixel">
                     <ui:ListView.ItemTemplate>
                         <DataTemplate>
                             <ui:Card Margin="0,0,0,8" Padding="16">
