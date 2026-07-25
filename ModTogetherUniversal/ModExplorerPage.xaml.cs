@@ -19,8 +19,9 @@ namespace ModTogetherUniversal
         {
             get 
             {
-                string dir = App.Settings.Current.ModDirectory;
-                return string.IsNullOrWhiteSpace(dir) ? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GameMods") : dir;
+                string gameDir = App.Settings.Current.GameDirectory;
+                if (string.IsNullOrWhiteSpace(gameDir)) gameDir = AppDomain.CurrentDomain.BaseDirectory;
+                return Path.Combine(gameDir, "GameMods");
             }
         }
         
@@ -43,6 +44,34 @@ namespace ModTogetherUniversal
 
         private string _menuDeleteText = "Delete Mod";
         public string MenuDeleteText { get => _menuDeleteText; set { _menuDeleteText = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(MenuDeleteText))); } }
+
+        private bool _isInstallAllowed = true;
+        public bool IsInstallAllowed
+        {
+            get => _isInstallAllowed;
+            set
+            {
+                if (_isInstallAllowed != value)
+                {
+                    _isInstallAllowed = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsInstallAllowed)));
+                }
+            }
+        }
+
+        private string _installToolTip = "Check to install this mod to target directory.";
+        public string InstallToolTip
+        {
+            get => _installToolTip;
+            set
+            {
+                if (_installToolTip != value)
+                {
+                    _installToolTip = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(InstallToolTip)));
+                }
+            }
+        }
 
         private System.IO.FileSystemWatcher? _watcher;
 
@@ -82,11 +111,14 @@ namespace ModTogetherUniversal
                     _watcher.Renamed += renamedHandler;
                 }
                 
+                CheckPluginStatus();
                 RefreshModsList();
+                LoadExplorerPresets();
             };
             App.Settings.OnSettingsChanged += () =>
             {
                 ApplyTranslations();
+                CheckPluginStatus();
                 RefreshModsList();
             };
         }
@@ -98,12 +130,9 @@ namespace ModTogetherUniversal
             if (TxtDesc != null) TxtDesc.Text = I18N.GetString("explorer_desc", lang);
             if (TxtModFolderLabel != null) TxtModFolderLabel.Text = I18N.GetString("explorer_mod_folder_label", lang);
 
-            // Display current ModDirectory or fallback message
-            string modDir = App.Settings.Current.ModDirectory;
+            // Display current GameMods directory
             if (TxtModFolderValue != null)
-                TxtModFolderValue.Text = string.IsNullOrWhiteSpace(modDir)
-                    ? I18N.GetString("explorer_no_mod_folder", lang)
-                    : modDir;
+                TxtModFolderValue.Text = ModsDirectory;
 
             if (TxtInstallTypeLabel != null) TxtInstallTypeLabel.Text = I18N.GetString("explorer_install_type", lang);
             if (CmbItemSingle != null) CmbItemSingle.Content = I18N.GetString("explorer_type_single", lang);
@@ -122,6 +151,90 @@ namespace ModTogetherUniversal
             ColSizeText = I18N.GetString("explorer_col_size", lang);
             ColModifiedText = I18N.GetString("explorer_col_modified", lang);
             MenuDeleteText = I18N.GetString("btn_delete_mod", lang);
+            
+            CheckPluginStatus();
+        }
+
+        private void CheckPluginStatus()
+        {
+            var activePlugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
+            if (activePlugin != null)
+            {
+                IsInstallAllowed = false;
+                InstallToolTip = $"Installation is managed by the active plugin ({activePlugin.Name}). Use the dedicated Plugin Tab.";
+                if (CmbInstallType != null)
+                {
+                    CmbInstallType.IsEnabled = false;
+                    CmbInstallType.ToolTip = InstallToolTip;
+                }
+                if (BtnInstallChecked != null) BtnInstallChecked.IsEnabled = false;
+                if (BtnUninstallChecked != null) BtnUninstallChecked.IsEnabled = false;
+                if (BtnCheckAll != null) BtnCheckAll.IsEnabled = false;
+                if (BtnUncheckAll != null) BtnUncheckAll.IsEnabled = false;
+                if (CardPluginNotice != null && TxtPluginNotice != null)
+                {
+                    CardPluginNotice.Visibility = Visibility.Visible;
+                    TxtPluginNotice.Text = $"⚡ Dedicated Extension Plugin ({activePlugin.Name}) Active: Mod installation for this game is managed by the plugin. Please use the '{activePlugin.Name}' tab in the navigation menu to install and manage mods.";
+                }
+            }
+            else
+            {
+                IsInstallAllowed = true;
+                InstallToolTip = "Check to install this mod to target directory.";
+                if (CmbInstallType != null)
+                {
+                    CmbInstallType.IsEnabled = true;
+                    CmbInstallType.ToolTip = null;
+                }
+                if (BtnInstallChecked != null) BtnInstallChecked.IsEnabled = true;
+                if (BtnUninstallChecked != null) BtnUninstallChecked.IsEnabled = true;
+                if (BtnCheckAll != null) BtnCheckAll.IsEnabled = true;
+                if (BtnUncheckAll != null) BtnUncheckAll.IsEnabled = true;
+                if (CardPluginNotice != null) CardPluginNotice.Visibility = Visibility.Collapsed;
+            }
+
+            bool isSessionActive = (App.Server != null && App.Server.IsRunning) || (App.Client != null && App.Client.IsConnected);
+            if (CmbExplorerPresets != null) CmbExplorerPresets.IsEnabled = !isSessionActive;
+            if (BtnSaveProfile != null) BtnSaveProfile.IsEnabled = !isSessionActive;
+            if (BtnDeleteProfile != null) BtnDeleteProfile.IsEnabled = !isSessionActive;
+        }
+
+        private void BtnInstallChecked_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsInstallAllowed) return;
+            int count = 0;
+            foreach (var item in _modItems.Where(m => m.IsChecked))
+            {
+                if (TryApplyInstallationState(item, true, out _)) count++;
+            }
+            TxtStatus.Text = $"⚡ Installed {count} checked mod(s) to target folder.";
+        }
+
+        private void BtnUninstallChecked_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsInstallAllowed) return;
+            int count = 0;
+            foreach (var item in _modItems.Where(m => m.IsChecked))
+            {
+                if (TryApplyInstallationState(item, false, out _)) count++;
+            }
+            TxtStatus.Text = $"❎ Uninstalled {count} checked mod(s) from target folder.";
+        }
+
+        private void BtnInstallRow_Click(object sender, RoutedEventArgs e)
+        {
+            if (!IsInstallAllowed)
+            {
+                var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
+                string pName = plugin?.Name ?? "Extension Plugin";
+                MessageBox.Show($"Mod installation for this game is managed by the '{pName}' extension plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            if (sender is Button btn && btn.Tag is ModItemData mod)
+            {
+                mod.IsChecked = !mod.IsChecked;
+            }
         }
 
         private void BtnCheckAll_Click(object sender, RoutedEventArgs e)
@@ -161,6 +274,7 @@ namespace ModTogetherUniversal
                     int conflictCount = 0;
                     foreach (var item in _modItems)
                     {
+                        item.OwnersBadgeText = RecycleManager.Instance.GetOwnersBadgeText(item.Filename);
                         item.Priority = scanResult.ModPriorities.TryGetValue(item.Filename, out int p) ? p : 0;
                         if (scanResult.ConflictedModFilenames.Contains(item.Filename))
                         {
@@ -243,6 +357,14 @@ namespace ModTogetherUniversal
 
         private void Mod_Checked(object sender, RoutedEventArgs e)
         {
+            if (!IsInstallAllowed)
+            {
+                var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
+                string pName = plugin?.Name ?? "Extension Plugin";
+                MessageBox.Show($"Mod installation for this game is managed by the '{pName}' extension plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (sender is CheckBox targetChk) targetChk.IsChecked = false;
+                return;
+            }
             if (sender is CheckBox chk && chk.DataContext is ModItemData mod)
             {
                 string targetDir = TargetDirectory;
@@ -334,9 +456,8 @@ namespace ModTogetherUniversal
             }
         }
 
-        private void BtnImportMod_Click(object sender, RoutedEventArgs e)
+        private async void BtnImportMod_Click(object sender, RoutedEventArgs e)
         {
-            if (!Directory.Exists(ModsDirectory)) Directory.CreateDirectory(ModsDirectory);
             var dialog = new Microsoft.Win32.OpenFileDialog
             {
                 Multiselect = true,
@@ -344,14 +465,27 @@ namespace ModTogetherUniversal
             };
             if (dialog.ShowDialog() == true)
             {
+                Directory.CreateDirectory(ModsDirectory);
                 int imported = 0;
                 foreach (var file in dialog.FileNames)
                 {
                     try
                     {
-                        string dest = Path.Combine(ModsDirectory, Path.GetFileName(file));
+                        string fileName = Path.GetFileName(file);
+                        string dest = Path.Combine(ModsDirectory, fileName);
                         File.Copy(file, dest, true);
                         imported++;
+
+                        // Trigger P2P sync for room
+                        if (App.Server != null && App.Server.IsRunning)
+                        {
+                            App.Server.DeletedMods.TryRemove(fileName, out _);
+                            App.Server.TriggerCacheRefresh();
+                        }
+                        else if (App.Client != null && App.Client.IsConnected)
+                        {
+                            await App.Client.UploadModAsync(dest, fileName);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -360,7 +494,7 @@ namespace ModTogetherUniversal
                 }
                 if (imported > 0)
                 {
-                    TxtStatus.Text = $"Imported {imported} mod(s).";
+                    TxtStatus.Text = $"Imported & Synced {imported} mod(s).";
                     RefreshModsList();
                 }
             }
@@ -525,5 +659,242 @@ namespace ModTogetherUniversal
                 }
             }
         }
+
+        private void MenuMoveToPreset_SubmenuOpened(object sender, RoutedEventArgs e)
+        {
+            PopulatePresetSubmenu(sender as MenuItem, isCopy: false);
+        }
+
+        private void MenuCopyToPreset_SubmenuOpened(object sender, RoutedEventArgs e)
+        {
+            PopulatePresetSubmenu(sender as MenuItem, isCopy: true);
+        }
+
+        private void PopulatePresetSubmenu(MenuItem? menuItem, bool isCopy)
+        {
+            if (menuItem == null) return;
+            menuItem.Items.Clear();
+
+            var presetNames = ModpackManager.Instance.GetPresetNames();
+            if (presetNames.Count == 0)
+            {
+                menuItem.Items.Add(new MenuItem { Header = "(No Presets Created Yet)", IsEnabled = false });
+            }
+            else
+            {
+                foreach (var name in presetNames)
+                {
+                    var pItem = new MenuItem { Header = name };
+                    var mod = menuItem.DataContext as ModItemData;
+                    pItem.Click += (_, _) => MoveModToPreset(mod, name, isCopy);
+                    menuItem.Items.Add(pItem);
+                }
+            }
+        }
+
+        private void MoveModToPreset(ModItemData? mod, string presetName, bool isCopy)
+        {
+            if (mod == null) return;
+            string sourceFile = Path.Combine(ModsDirectory, mod.Filename);
+            if (!File.Exists(sourceFile) && !Directory.Exists(sourceFile))
+            {
+                MessageBox.Show($"Mod file not found: {mod.Filename}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            string presetDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "ModTogether", "Presets", presetName);
+            Directory.CreateDirectory(presetDir);
+            string destFile = Path.Combine(presetDir, mod.Filename);
+
+            try
+            {
+                if (Directory.Exists(sourceFile))
+                {
+                    ModpackManager.Instance.CopyDirectory(sourceFile, destFile);
+                    if (!isCopy) Directory.Delete(sourceFile, true);
+                }
+                else
+                {
+                    File.Copy(sourceFile, destFile, true);
+                    if (!isCopy) File.Delete(sourceFile);
+                }
+
+                TxtStatus.Text = isCopy ? $"Copied {mod.Filename} -> Preset '{presetName}'" : $"Moved {mod.Filename} -> Preset '{presetName}'";
+                if (!isCopy) RefreshModsList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to move/copy mod to preset:\n{ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        #region Profile Presets Handlers
+
+        private bool _loadingPresets;
+        private const string AllModsPreset = "[Off / Default Mods]";
+
+        private void LoadExplorerPresets(string? selectedName = null)
+        {
+            _loadingPresets = true;
+            var savedPreset = SessionManager.Instance.State.SelectedExplorerPreset;
+            var currentSelection = selectedName ?? CmbExplorerPresets.SelectedItem as string ?? savedPreset;
+            var presets = ModpackManager.Instance.GetPresetNames();
+            CmbExplorerPresets.Items.Clear();
+            CmbExplorerPresets.Items.Add(AllModsPreset);
+            foreach (var name in presets)
+            {
+                CmbExplorerPresets.Items.Add(name);
+            }
+            CmbExplorerPresets.SelectedItem = CmbExplorerPresets.Items.Contains(currentSelection) ? currentSelection : AllModsPreset;
+
+            if (CmbInstallType != null)
+            {
+                CmbInstallType.SelectedIndex = SessionManager.Instance.State.ExplorerInstallTypeIndex;
+            }
+            _loadingPresets = false;
+        }
+
+        private void CmbExplorerPresets_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_loadingPresets || CmbExplorerPresets.SelectedItem is not string presetName)
+            {
+                return;
+            }
+
+            bool isSessionActive = (App.Server != null && App.Server.IsRunning) || (App.Client != null && App.Client.IsConnected);
+            if (isSessionActive)
+            {
+                MessageBox.Show(
+                    "⚠️ Changing Mod Presets is strictly locked while an active room session is in progress (Hosting or Joined).\n\nPlease stop hosting or disconnect from the room first to prevent critical synchronization errors.",
+                    "Preset Locked During Session", MessageBoxButton.OK, MessageBoxImage.Warning);
+                _loadingPresets = true;
+                CmbExplorerPresets.SelectedItem = e.RemovedItems.Count > 0 ? e.RemovedItems[0] : AllModsPreset;
+                _loadingPresets = false;
+                return;
+            }
+
+            SessionManager.Instance.State.SelectedExplorerPreset = presetName;
+            SessionManager.Instance.Save();
+
+            if (presetName == AllModsPreset || presetName.Contains("Default") || presetName.Contains("Off"))
+            {
+                bool restored = ModpackManager.Instance.RestoreOriginalMods(ModsDirectory);
+                TxtStatus.Text = restored ? "✅ Restored original mods from .stash." : "Activated Default Mods.";
+            }
+            else
+            {
+                bool loaded = ModpackManager.Instance.LoadPreset(presetName, ModsDirectory);
+                if (loaded)
+                {
+                    TxtStatus.Text = $"✅ Loaded Preset '{presetName}' (Original mods stashed in .stash)";
+                }
+            }
+
+            RefreshModsList();
+            App.Server?.TriggerCacheRefresh();
+        }
+
+        private void CmbInstallType_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_loadingPresets && CmbInstallType != null)
+            {
+                SessionManager.Instance.State.ExplorerInstallTypeIndex = CmbInstallType.SelectedIndex;
+                SessionManager.Instance.Save();
+            }
+        }
+
+        private bool TryApplyInstallationState(ModItemData mod, bool install, out string error)
+        {
+            error = string.Empty;
+            var targetDir = TargetDirectory;
+            if (string.IsNullOrWhiteSpace(targetDir) || !Directory.Exists(targetDir))
+            {
+                error = "Configure a valid game directory in Settings first.";
+                return false;
+            }
+
+            try
+            {
+                var sourceFile = Path.Combine(ModsDirectory, mod.Filename);
+                if (CmbInstallType.SelectedIndex == 0)
+                {
+                    var destinationFile = Path.Combine(targetDir, mod.Filename);
+                    if (install)
+                    {
+                        if (!File.Exists(sourceFile))
+                        {
+                            error = "The source mod file is missing.";
+                            return false;
+                        }
+                        File.Copy(sourceFile, destinationFile, true);
+                    }
+                    else if (File.Exists(destinationFile))
+                    {
+                        File.Delete(destinationFile);
+                    }
+                    return true;
+                }
+
+                if (!mod.Filename.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
+                {
+                    error = "Extract mode supports .zip files only.";
+                    return false;
+                }
+
+                if (install)
+                {
+                    if (!File.Exists(sourceFile))
+                    {
+                        error = "The source mod file is missing.";
+                        return false;
+                    }
+                    ZipFile.ExtractToDirectory(sourceFile, targetDir, true);
+                }
+                else if (File.Exists(sourceFile))
+                {
+                    using var archive = ZipFile.OpenRead(sourceFile);
+                    foreach (var entry in archive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)))
+                    {
+                        var destinationFile = Path.GetFullPath(Path.Combine(targetDir, entry.FullName));
+                        if (!destinationFile.StartsWith(Path.GetFullPath(targetDir), StringComparison.OrdinalIgnoreCase))
+                        {
+                            error = "The archive contains an unsafe path.";
+                            return false;
+                        }
+                        if (File.Exists(destinationFile)) File.Delete(destinationFile);
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                error = ex.Message;
+                return false;
+            }
+        }
+
+        private void BtnSaveProfile_Click(object sender, RoutedEventArgs e)
+        {
+            string name = TxtProfileName != null && !string.IsNullOrWhiteSpace(TxtProfileName.Text) 
+                ? TxtProfileName.Text.Trim() 
+                : $"Preset_{DateTime.Now:yyyyMMdd_HHmmss}";
+
+            ModpackManager.Instance.SavePreset(name, ModsDirectory);
+            TxtStatus.Text = $"✅ Saved Preset '{name}' to Documents/ModTogether/Presets/{name}";
+            if (TxtProfileName != null) TxtProfileName.Text = "";
+            LoadExplorerPresets(name);
+        }
+
+        private void BtnDeleteProfile_Click(object sender, RoutedEventArgs e)
+        {
+            if (CmbExplorerPresets.SelectedItem is string profileName && profileName != AllModsPreset)
+            {
+                ModpackManager.Instance.DeletePreset(profileName);
+                TxtStatus.Text = $"Deleted preset '{profileName}'";
+                LoadExplorerPresets();
+            }
+        }
+
+        #endregion
     }
 }

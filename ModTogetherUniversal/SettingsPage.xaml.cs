@@ -1,4 +1,7 @@
-﻿using System.Windows;
+using System;
+using System.IO;
+using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace ModTogetherUniversal
@@ -22,9 +25,14 @@ namespace ModTogetherUniversal
         {
             _isLoaded = false;
             TxtgameDir.Text = App.Settings.Current.GameDirectory;
-            TxtModDir.Text = App.Settings.Current.ModDirectory;
 
-            
+            if (ToggleDebugLog != null) ToggleDebugLog.IsChecked = App.Settings.Current.EnableDebugLog;
+            if (ToggleErrorLog != null) ToggleErrorLog.IsChecked = App.Settings.Current.EnableErrorLog;
+            if (TogglePluginSecurity != null) TogglePluginSecurity.IsChecked = App.Settings.Current.StrictPluginSecurity;
+
+            if (TxtDownloadLimit != null) TxtDownloadLimit.Text = App.Settings.Current.MaxDownloadSpeedKbps.ToString();
+            if (TxtUploadLimit != null) TxtUploadLimit.Text = App.Settings.Current.MaxUploadSpeedKbps.ToString();
+
             string currentLang = App.Settings.Current.Language;
             foreach (ComboBoxItem item in ComboLanguage.Items)
             {
@@ -44,7 +52,73 @@ namespace ModTogetherUniversal
                     break;
                 }
             }
+
+            RefreshGameProfilesList();
             _isLoaded = true;
+        }
+
+        private void RefreshGameProfilesList()
+        {
+            if (CmbGameProfiles == null) return;
+            CmbGameProfiles.Items.Clear();
+
+            var currentPath = App.Settings.Current.GameDirectory;
+            if (!string.IsNullOrWhiteSpace(currentPath) && !App.Settings.Current.GamePathHistory.Contains(currentPath))
+            {
+                App.Settings.Current.GamePathHistory.Add(currentPath);
+                App.Settings.Save();
+            }
+
+            foreach (var path in App.Settings.Current.GamePathHistory)
+            {
+                string folderName = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                if (string.IsNullOrWhiteSpace(folderName)) folderName = path;
+                CmbGameProfiles.Items.Add($"{folderName} ({path})");
+            }
+
+            if (!string.IsNullOrWhiteSpace(currentPath))
+            {
+                var match = CmbGameProfiles.Items.Cast<string>().FirstOrDefault(i => i.Contains(currentPath));
+                if (match != null) CmbGameProfiles.SelectedItem = match;
+            }
+        }
+
+        private void CmbGameProfiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!_isLoaded || CmbGameProfiles.SelectedItem is not string selected) return;
+            
+            foreach (var path in App.Settings.Current.GamePathHistory)
+            {
+                if (selected.Contains(path))
+                {
+                    App.Settings.Current.GameDirectory = path;
+                    App.Settings.Save();
+                    TxtgameDir.Text = path;
+                    MainWindow.Instance?.Log($"🎮 Switched Game Profile to: {path}");
+                    MainWindow.Instance?.ReloadAllPlugins();
+                    break;
+                }
+            }
+        }
+
+        private void BandwidthLimit_Changed(object sender, TextChangedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            if (int.TryParse(TxtDownloadLimit?.Text, out int dl)) App.Settings.Current.MaxDownloadSpeedKbps = Math.Max(0, dl);
+            if (int.TryParse(TxtUploadLimit?.Text, out int ul)) App.Settings.Current.MaxUploadSpeedKbps = Math.Max(0, ul);
+            App.Settings.Save();
+        }
+
+        private void BtnSpeedUnlimited_Click(object sender, RoutedEventArgs e)
+        {
+            if (TxtDownloadLimit != null) TxtDownloadLimit.Text = "0";
+            if (TxtUploadLimit != null) TxtUploadLimit.Text = "0";
+        }
+
+        private void BtnSpeed2MB_Click(object sender, RoutedEventArgs e)
+        {
+            if (TxtDownloadLimit != null) TxtDownloadLimit.Text = "2048";
+            if (TxtUploadLimit != null) TxtUploadLimit.Text = "2048";
         }
 
         private void ApplyTranslations()
@@ -58,12 +132,6 @@ namespace ModTogetherUniversal
             if (BtnSelectFolder != null) BtnSelectFolder.Content = Models.I18N.GetString("btn_select_folder", lang);
             if (BtnResetPath != null) BtnResetPath.Content = Models.I18N.GetString("btn_reset_path", lang);
 
-            if (LblModDir != null) LblModDir.Text = Models.I18N.GetString("lbl_mod_dir", lang);
-            if (DescModDir != null) DescModDir.Text = Models.I18N.GetString("desc_mod_dir", lang);
-            if (TxtModDir != null) TxtModDir.PlaceholderText = Models.I18N.GetString("placeholder_mod_dir", lang);
-            if (BtnSelectModFolder != null) BtnSelectModFolder.Content = Models.I18N.GetString("btn_select_mod_folder", lang);
-            if (BtnResetModPath != null) BtnResetModPath.Content = Models.I18N.GetString("btn_reset_mod_path", lang);
-            
             if (LblTheme != null) LblTheme.Text = Models.I18N.GetString("lbl_theme", lang);
             if (DescTheme != null) DescTheme.Text = Models.I18N.GetString("desc_theme", lang);
             if (OptThemeLight != null) OptThemeLight.Content = Models.I18N.GetString("theme_light", lang);
@@ -72,10 +140,43 @@ namespace ModTogetherUniversal
             
             if (LblLanguage != null) LblLanguage.Text = Models.I18N.GetString("lbl_language", lang);
             if (DescLanguage != null) DescLanguage.Text = Models.I18N.GetString("desc_language", lang);
+
+            if (LblDebugLog != null) LblDebugLog.Text = Models.I18N.GetString("lbl_debug_log", lang);
+            if (DescDebugLog != null) DescDebugLog.Text = Models.I18N.GetString("desc_debug_log", lang);
+
+            if (LblErrorLog != null) LblErrorLog.Text = Models.I18N.GetString("lbl_error_log", lang);
+            if (DescErrorLog != null) DescErrorLog.Text = Models.I18N.GetString("desc_error_log", lang);
+
+            if (LblPluginSecurity != null) LblPluginSecurity.Text = Models.I18N.GetString("lbl_plugin_security", lang);
+            if (DescPluginSecurity != null) DescPluginSecurity.Text = Models.I18N.GetString("desc_plugin_security", lang);
             
             if (LblAppUpdate != null) LblAppUpdate.Text = Models.I18N.GetString("lbl_app_update", lang);
             if (DescUpdate != null) DescUpdate.Text = Models.I18N.GetString("desc_update", lang);
             if (BtnCheckUpdate != null) BtnCheckUpdate.Content = Models.I18N.GetString("btn_check_update", lang);
+        }
+
+        private void ToggleDebugLog_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            App.Settings.Current.EnableDebugLog = ToggleDebugLog.IsChecked ?? true;
+            App.Settings.Save();
+            MainWindow.Instance?.Log($"⚙️ Debug Logging set to: {(App.Settings.Current.EnableDebugLog ? "ON" : "OFF")}");
+        }
+
+        private void ToggleErrorLog_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            App.Settings.Current.EnableErrorLog = ToggleErrorLog.IsChecked ?? true;
+            App.Settings.Save();
+            MainWindow.Instance?.Log($"⚙️ Error Log file writing set to: {(App.Settings.Current.EnableErrorLog ? "ON" : "OFF")}");
+        }
+
+        private void TogglePluginSecurity_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_isLoaded) return;
+            App.Settings.Current.StrictPluginSecurity = TogglePluginSecurity.IsChecked ?? true;
+            App.Settings.Save();
+            MainWindow.Instance?.Log($"🛡️ Plugin Security Inspection set to: {(App.Settings.Current.StrictPluginSecurity ? "STRICT (ON)" : "DISABLED (OFF)")}");
         }
 
         private void BtnSelectFolder_Click(object sender, RoutedEventArgs e)
@@ -85,10 +186,16 @@ namespace ModTogetherUniversal
             {
                 if (!string.IsNullOrEmpty(dialog.FolderName))
                 {
-                    App.Settings.Current.GameDirectory = dialog.FolderName;
+                    var path = dialog.FolderName;
+                    App.Settings.Current.GameDirectory = path;
+                    if (!App.Settings.Current.GamePathHistory.Contains(path))
+                    {
+                        App.Settings.Current.GamePathHistory.Add(path);
+                    }
                     App.Settings.Save();
                     
-                    TxtgameDir.Text = dialog.FolderName;
+                    TxtgameDir.Text = path;
+                    RefreshGameProfilesList();
                     MainWindow.Instance?.ReloadAllPlugins();
                 }
             }
@@ -99,35 +206,9 @@ namespace ModTogetherUniversal
             App.Settings.Current.GameDirectory = string.Empty;
             App.Settings.Save();
             TxtgameDir.Text = string.Empty;
-            MainWindow.Instance?.Log("ðŸ”„ Game path has been reset. Please select a new Game folder.");
+            MainWindow.Instance?.Log("🔄 Game path has been reset. Please select a new Game folder.");
             MainWindow.Instance?.ValidateGamePath();
             MainWindow.Instance?.ReloadAllPlugins();
-        }
-
-        private void BtnSelectModFolder_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Microsoft.Win32.OpenFolderDialog
-            {
-                Title = "Select Mod Folder Path (where mods will be installed)"
-            };
-            if (dialog.ShowDialog() == true)
-            {
-                if (!string.IsNullOrEmpty(dialog.FolderName))
-                {
-                    App.Settings.Current.ModDirectory = dialog.FolderName;
-                    App.Settings.Save();
-                    TxtModDir.Text = dialog.FolderName;
-                    MainWindow.Instance?.Log($"ðŸ“‚ Mod Folder Path set to: {dialog.FolderName}");
-                }
-            }
-        }
-
-        private void BtnResetModPath_Click(object sender, RoutedEventArgs e)
-        {
-            App.Settings.Current.ModDirectory = string.Empty;
-            App.Settings.Save();
-            TxtModDir.Text = string.Empty;
-            MainWindow.Instance?.Log("ðŸ”„ Mod Folder Path has been reset.");
         }
 
         private void ComboTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -138,7 +219,6 @@ namespace ModTogetherUniversal
                 App.Settings.Current.Theme = theme;
                 App.Settings.Save();
                 
-                // Apply theme immediately
                 App.ApplyTheme(theme);
             }
         }
@@ -157,6 +237,14 @@ namespace ModTogetherUniversal
         {
             await App.Updater.CheckForUpdatesAsync();
         }
+
+        private void ScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+        {
+            if (sender is ScrollViewer scv)
+            {
+                scv.ScrollToVerticalOffset(scv.VerticalOffset - e.Delta);
+                e.Handled = true;
+            }
+        }
     }
 }
-

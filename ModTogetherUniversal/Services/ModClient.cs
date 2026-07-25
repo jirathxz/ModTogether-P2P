@@ -20,6 +20,8 @@ namespace ModTogetherUniversal.Services
         public event Action<int>? OnDownloadProgress;
         public event Action<string>? OnModDownloaded;
 
+        public bool IsConnected => !string.IsNullOrEmpty(_hostIp);
+
         public ModClient()
         {
             _httpClient = new HttpClient();
@@ -45,16 +47,21 @@ namespace ModTogetherUniversal.Services
         public bool IsSynced { get; private set; }
         public int CurrentSyncProgress { get; private set; }
         public string CurrentActivity { get; private set; } = "";
+        public int LastPingMs { get; private set; } = 0;
 
         public async Task<bool> HeartbeatAsync()
         {
             try
             {
-                var response = await _httpClient.PostAsync($"http://{_hostIp}:{_port}/heartbeat?username={Uri.EscapeDataString(_username)}&isSynced={IsSynced}&syncProgress={CurrentSyncProgress}&currentActivity={Uri.EscapeDataString(CurrentActivity)}", null);
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var response = await _httpClient.PostAsync($"http://{_hostIp}:{_port}/heartbeat?username={Uri.EscapeDataString(_username)}&isSynced={IsSynced}&syncProgress={CurrentSyncProgress}&currentActivity={Uri.EscapeDataString(CurrentActivity)}&pingMs={LastPingMs}", null);
+                sw.Stop();
+                LastPingMs = (int)sw.ElapsedMilliseconds;
+
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadFromJsonAsync<HeartbeatResponse>();
-                    if (content?.status == "kicked")
+                    if (content?.status == "kicked" || content?.status == "banned")
                     {
                         OnKicked?.Invoke();
                         return false;
@@ -106,11 +113,8 @@ namespace ModTogetherUniversal.Services
                     {
                         OnUsersUpdate?.Invoke(serverData.active_users);
 
-                        var localMods = new HashSet<string>(Directory.GetFiles(cacheDir, "*.*")
-                            .Where(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || 
-                                        f.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) || 
-                                        f.EndsWith(".rar", StringComparison.OrdinalIgnoreCase))
-                            .Select(Path.GetFileName)!);
+                        var localMods = new HashSet<string>(Directory.GetFiles(cacheDir, "*.*", SearchOption.AllDirectories)
+                            .Select(f => Path.GetRelativePath(cacheDir, f).Replace("\\", "/"))!);
 
                         var recycleDir = Path.Combine(cacheDir, ".recycle_mods");
 
@@ -374,5 +378,9 @@ namespace ModTogetherUniversal.Services
         public bool IsSynced { get; set; }
         public int SyncProgress { get; set; }
         public string CurrentActivity { get; set; } = "";
+        public int PingMs { get; set; } = 0;
+
+        public bool IsHostUser => Username.EndsWith("(Host)", StringComparison.OrdinalIgnoreCase) || Username.Contains(" (Host)");
+        public System.Windows.Visibility ManagementVisibility => IsHostUser ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
     }
 }

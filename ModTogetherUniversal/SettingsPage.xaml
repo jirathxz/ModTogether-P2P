@@ -3,39 +3,56 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Title="SettingsPage">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="True">
         <Grid Margin="24" MinWidth="400">
             <StackPanel MaxWidth="800" HorizontalAlignment="Stretch">
                 <TextBlock x:Name="LblSettingsTitle" Text="Settings" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,24" />
                 
+                <!-- Game Path & Multi-Game Profile Switching -->
                 <ui:CardControl Icon="{ui:SymbolIcon Folder24}" Margin="0,0,0,8">
                     <ui:CardControl.Header>
                         <StackPanel>
-                            <TextBlock x:Name="LblGameDir" Text="MHW Game Directory:" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
-                            <TextBlock x:Name="DescGameDir" Text="Select the folder where MonsterHunterWorld.exe is located." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="LblGameDir" Text="Active Game Directory:" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescGameDir" Text="Select the folder where your game executable is located." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </ui:CardControl.Header>
                     <StackPanel Orientation="Horizontal">
-                        <ui:TextBox x:Name="TxtgameDir" PlaceholderText="Select Monster Hunter World folder..." Width="300" Margin="0,0,8,0" IsReadOnly="True" />
+                        <ui:TextBox x:Name="TxtgameDir" PlaceholderText="Select game executable folder..." Width="300" Margin="0,0,8,0" IsReadOnly="True" />
                         <ui:Button x:Name="BtnSelectFolder" Content="Select Folder" Click="BtnSelectFolder_Click" Margin="0,0,8,0" />
                         <ui:Button x:Name="BtnResetPath" Content="Reset Path" Click="BtnResetPath_Click" Appearance="Secondary" />
                     </StackPanel>
                 </ui:CardControl>
 
-                <ui:CardControl Icon="{ui:SymbolIcon FolderOpen24}" Margin="0,0,0,8">
+                <!-- Multi-Game Profile Switcher -->
+                <ui:CardControl Icon="{ui:SymbolIcon Games24}" Margin="0,0,0,8">
                     <ui:CardControl.Header>
                         <StackPanel>
-                            <TextBlock x:Name="LblModDir" Text="Mod Folder Path:" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
-                            <TextBlock x:Name="DescModDir" Text="Select the folder where Mod Explorer will install mods." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="Multi-Game Profile Switcher" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock Text="Quickly switch between configured game executable profiles without duplicate entries." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ComboBox x:Name="CmbGameProfiles" SelectionChanged="CmbGameProfiles_SelectionChanged" Width="380" HorizontalAlignment="Right" />
+                </ui:CardControl>
+
+                <!-- P2P Bandwidth Limiter -->
+                <ui:CardControl Icon="{ui:SymbolIcon TopSpeed24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock Text="P2P Bandwidth Limiter" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock Text="Limit max Upload and Download speed during P2P file sync to prevent network lag while gaming." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </ui:CardControl.Header>
                     <StackPanel Orientation="Horizontal">
-                        <ui:TextBox x:Name="TxtModDir" PlaceholderText="Select mod or game folder..." Width="300" Margin="0,0,8,0" IsReadOnly="True" />
-                        <ui:Button x:Name="BtnSelectModFolder" Content="Select Folder" Click="BtnSelectModFolder_Click" Margin="0,0,8,0" />
-                        <ui:Button x:Name="BtnResetModPath" Content="Reset" Click="BtnResetModPath_Click" Appearance="Secondary" />
+                        <TextBlock Text="DL (KB/s):" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" />
+                        <ui:TextBox x:Name="TxtDownloadLimit" Width="80" Text="0" TextChanged="BandwidthLimit_Changed" Margin="0,0,12,0" ToolTip="0 = Unlimited Speed" />
+                        
+                        <TextBlock Text="UL (KB/s):" VerticalAlignment="Center" Margin="0,0,6,0" FontSize="12" />
+                        <ui:TextBox x:Name="TxtUploadLimit" Width="80" Text="0" TextChanged="BandwidthLimit_Changed" Margin="0,0,12,0" ToolTip="0 = Unlimited Speed" />
+                        
+                        <ui:Button Content="Unlimited" Click="BtnSpeedUnlimited_Click" Appearance="Secondary" Margin="0,0,4,0" />
+                        <ui:Button Content="2 MB/s" Click="BtnSpeed2MB_Click" Appearance="Secondary" />
                     </StackPanel>
                 </ui:CardControl>
-
 
                 <ui:CardControl Icon="{ui:SymbolIcon PaintBrush24}" Margin="0,0,0,8">
                     <ui:CardControl.Header>
@@ -62,6 +79,36 @@
                         <ComboBoxItem Content="English" Tag="en" />
                         <ComboBoxItem Content="ไทย" Tag="th" />
                     </ComboBox>
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon Bug24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblDebugLog" Text="Debug Logging" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescDebugLog" Text="Enable verbose debugging output in Console Log." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ui:ToggleSwitch x:Name="ToggleDebugLog" Click="ToggleDebugLog_Click" />
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon DocumentError24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblErrorLog" Text="Error Log File Writing" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescErrorLog" Text="Automatically write crash tracebacks to error.log." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ui:ToggleSwitch x:Name="ToggleErrorLog" Click="ToggleErrorLog_Click" />
+                </ui:CardControl>
+
+                <ui:CardControl Icon="{ui:SymbolIcon ShieldCheckmark24}" Margin="0,0,0,8">
+                    <ui:CardControl.Header>
+                        <StackPanel>
+                            <TextBlock x:Name="LblPluginSecurity" Text="Plugin Security Verification" FontSize="15" FontWeight="Medium" Margin="0,0,0,2" />
+                            <TextBlock x:Name="DescPluginSecurity" Text="Verify SHA-256 signatures and inspect plugin DLL bytecode before execution." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </ui:CardControl.Header>
+                    <ui:ToggleSwitch x:Name="TogglePluginSecurity" Click="TogglePluginSecurity_Click" />
                 </ui:CardControl>
 
                 <ui:CardControl Icon="{ui:SymbolIcon ArrowSync24}" Margin="0,0,0,8">

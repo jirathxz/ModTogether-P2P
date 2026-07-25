@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Windows;
 using Wpf.Ui.Controls;
 
@@ -6,6 +7,14 @@ namespace ModTogetherUniversal
 {
     public partial class MainWindow : FluentWindow
     {
+        private static readonly Encoding Windows1252;
+        private static readonly UTF8Encoding StrictUtf8 = new(false, true);
+
+        static MainWindow()
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Windows1252 = Encoding.GetEncoding(1252);
+        }
         public static MainWindow? Instance { get; private set; }
         private string _updateUrlStandalone = "";
         private string _updateAssetNameStandalone = "";
@@ -30,8 +39,10 @@ namespace ModTogetherUniversal
                     Wpf.Ui.Appearance.SystemThemeWatcher.Watch(this);
                 }
 
+                Services.DiscordRpcService.Instance.Initialize();
                 ApplyTranslations();
                 ValidateGamePath();
+                Task.Run(async () => await RunAllTests.RunVerificationAsync());
             };
             App.Settings.OnSettingsChanged += () => 
             {
@@ -231,12 +242,41 @@ namespace ModTogetherUniversal
 
         public void Log(string message)
         {
+            if (message.StartsWith("[DEBUG]", StringComparison.OrdinalIgnoreCase) && App.Settings?.Current?.EnableDebugLog == false)
+            {
+                return;
+            }
+
             Dispatcher.Invoke(() =>
             {
-                LogBox.AppendText($"{message}{Environment.NewLine}");
+                LogBox.AppendText($"{RepairMojibake(message)}{Environment.NewLine}");
                 LogBox.ScrollToEnd();
             });
         }
+
+        // Older builds wrote some UTF-8 symbols through a legacy code page.
+        // Repair them at the display boundary so existing service messages remain readable.
+        private static string RepairMojibake(string value)
+        {
+            for (var attempt = 0; attempt < 2 && LooksLikeMojibake(value); attempt++)
+            {
+                try
+                {
+                    var repaired = StrictUtf8.GetString(Windows1252.GetBytes(value));
+                    if (repaired == value) break;
+                    value = repaired;
+                }
+                catch (DecoderFallbackException)
+                {
+                    break;
+                }
+            }
+
+            return value;
+        }
+
+        private static bool LooksLikeMojibake(string value) =>
+            value.Contains('Ã') || value.Contains('Â') || value.Contains('â') || value.Contains('ð') || value.Contains('Å');
         
         public void UpdateUploadProgress(int value)
         {
@@ -294,6 +334,9 @@ namespace ModTogetherUniversal
                     var header = new Wpf.Ui.Controls.NavigationViewItemHeader
                     {
                         Text = "PLUGINS",
+                        FontSize = 10.5,
+                        Opacity = 0.55,
+                        Margin = new System.Windows.Thickness(12, 10, 0, 4),
                         Tag = "DynamicPluginHeader"
                     };
                     RootNavigation.MenuItems.Add(header);
@@ -368,6 +411,24 @@ namespace ModTogetherUniversal
                     NavRecovery.IsEnabled = isValid;
                     NavRecovery.Opacity = isValid ? 1.0 : 0.4;
                 }
+
+                if (NavPlugins != null)
+                {
+                    NavPlugins.IsEnabled = isValid;
+                    NavPlugins.Opacity = isValid ? 1.0 : 0.4;
+                }
+
+                if (RootNavigation?.MenuItems != null)
+                {
+                    foreach (var item in RootNavigation.MenuItems)
+                    {
+                        if (item is Wpf.Ui.Controls.NavigationViewItem navItem && navItem.Tag?.ToString() == "DynamicPlugin")
+                        {
+                            navItem.IsEnabled = isValid;
+                            navItem.Opacity = isValid ? 1.0 : 0.4;
+                        }
+                    }
+                }
                 
                 if (!isValid)
                 {
@@ -399,6 +460,124 @@ namespace ModTogetherUniversal
                 }
             });
         }
+
+        private void Window_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                bool hasValidMod = files != null && files.Any(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                                                                  f.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) ||
+                                                                  f.EndsWith(".rar", StringComparison.OrdinalIgnoreCase));
+                if (hasValidMod)
+                {
+                    e.Effects = DragDropEffects.Copy;
+                    e.Handled = true;
+                    return;
+                }
+            }
+            e.Effects = DragDropEffects.None;
+            e.Handled = true;
+        }
+
+        private async void Window_Drop(object sender, DragEventArgs e)
+        {
+            if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (files == null || files.Length == 0) return;
+
+            string gameDir = App.Settings.Current.GameDirectory;
+            string targetDir = string.IsNullOrWhiteSpace(gameDir) ? System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "GameMods") : System.IO.Path.Combine(gameDir, "GameMods");
+            System.IO.Directory.CreateDirectory(targetDir);
+
+            int count = 0;
+            foreach (var file in files)
+            {
+                if (file.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                    file.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) ||
+                    file.EndsWith(".rar", StringComparison.OrdinalIgnoreCase))
+                {
+                    string fileName = System.IO.Path.GetFileName(file);
+                    string destPath = System.IO.Path.Combine(targetDir, fileName);
+
+                    try
+                    {
+                        System.IO.File.Copy(file, destPath, true);
+                        Log($"📦 Imported mod via Drag & Drop: {fileName}");
+                        count++;
+
+                        // Auto-sync with connected room
+                        if (App.Server != null && App.Server.IsRunning)
+                        {
+                            App.Server.DeletedMods.TryRemove(fileName, out _);
+                            App.Server.TriggerCacheRefresh();
+                        }
+                        else if (App.Client != null && App.Client.IsConnected)
+                        {
+                            await App.Client.UploadModAsync(destPath, fileName);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"❌ Failed to import {fileName}: {ex.Message}");
+                    }
+                }
+            }
+
+            if (count > 0)
+            {
+                Log($"✅ Imported & Synced {count} mod(s) with party room!");
+            }
+        }
+
+        #region Global Mouse Wheel Scroll System
+
+        protected override void OnPreviewMouseWheel(System.Windows.Input.MouseWheelEventArgs e)
+        {
+            base.OnPreviewMouseWheel(e);
+
+            if (e.Handled) return;
+
+            var originalSource = e.OriginalSource as DependencyObject;
+            var scrollViewer = FindAncestor<System.Windows.Controls.ScrollViewer>(originalSource) 
+                               ?? FindScrollableChild(RootNavigation);
+
+            if (scrollViewer != null)
+            {
+                double delta = e.Delta / 2.0;
+                double targetOffset = scrollViewer.VerticalOffset - delta;
+                scrollViewer.ScrollToVerticalOffset(Math.Max(0, Math.Min(scrollViewer.ScrollableHeight, targetOffset)));
+                e.Handled = true;
+            }
+        }
+
+        private static T? FindAncestor<T>(DependencyObject? current) where T : DependencyObject
+        {
+            while (current != null)
+            {
+                if (current is T t) return t;
+                current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+            }
+            return null;
+        }
+
+        private static System.Windows.Controls.ScrollViewer? FindScrollableChild(DependencyObject? obj)
+        {
+            if (obj == null) return null;
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(obj); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(obj, i);
+                if (child is System.Windows.Controls.ScrollViewer sv && sv.ScrollableHeight > 0)
+                {
+                    return sv;
+                }
+                var childOfChild = FindScrollableChild(child);
+                if (childOfChild != null) return childOfChild;
+            }
+            return null;
+        }
+
+        #endregion
     }
 }
-

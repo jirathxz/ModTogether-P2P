@@ -72,6 +72,23 @@ namespace ModTogetherUniversal.Models
 
         public System.Windows.Visibility ConflictVisibility => HasConflict ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
 
+        private string _ownersBadgeText = string.Empty;
+        public string OwnersBadgeText
+        {
+            get => _ownersBadgeText;
+            set
+            {
+                if (_ownersBadgeText != value)
+                {
+                    _ownersBadgeText = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OwnersBadgeText)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OwnersBadgeVisibility)));
+                }
+            }
+        }
+
+        public System.Windows.Visibility OwnersBadgeVisibility => !string.IsNullOrEmpty(OwnersBadgeText) ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
         public event PropertyChangedEventHandler? PropertyChanged;
     }
 }

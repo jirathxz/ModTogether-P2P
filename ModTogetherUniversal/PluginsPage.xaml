@@ -1,45 +1,100 @@
-﻿<Page x:Class="ModTogetherUniversal.PluginsPage"
+<Page x:Class="ModTogetherUniversal.PluginsPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       mc:Ignorable="d" 
-      d:DesignHeight="600" d:DesignWidth="800"
+      d:DesignHeight="700" d:DesignWidth="900"
       Title="PluginsPage">
 
-    <Grid Margin="16">
+    <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
+        <!-- Header Section -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock x:Name="TxtTitle" Text="Plugins" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8" />
-            <TextBlock x:Name="TxtDesc" Text="Manage and load plugins for different games." Foreground="Gray" Margin="0,0,0,24" />
+            <TextBlock x:Name="TxtTitle" Text="Plugins &amp; Extensions" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,4" />
+            <TextBlock x:Name="TxtDesc" Text="Manage installed game plugins, browse the online repository, and inspect security permissions." Foreground="Gray" Margin="0,0,0,16" />
             
-            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                <ui:Button x:Name="BtnOpenFolder" Content="Open Plugins Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenFolder_Click" Margin="0,0,8,0" Appearance="Primary"/>
-            </StackPanel>
+            <WrapPanel Margin="0,0,0,8">
+                <ui:Button x:Name="BtnOpenFolder" Content="Open Plugins Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenFolder_Click" Margin="0,0,8,4" Appearance="Primary"/>
+                <ui:Button x:Name="BtnReloadPlugins" Content="Reload Plugins" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnReloadPlugins_Click" Margin="0,0,8,4" Appearance="Secondary"/>
+                <ui:Button x:Name="BtnCheckUpdates" Content="Check &amp; Update All" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnCheckUpdates_Click" Margin="0,0,8,4" Appearance="Success"/>
+            </WrapPanel>
         </StackPanel>
 
-        <ui:ListView x:Name="ListExtensions" Grid.Row="1" SelectionMode="Single">
-            <ui:ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid Margin="8">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
-                            <TextBlock Text="{Binding Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <ui:Badge Appearance="Secondary" Content="{Binding Version}" Margin="0,0,8,0"/>
-                                <ui:Badge Appearance="Success" Content="{Binding TargetGame}"/>
-                            </StackPanel>
-                            <TextBlock Text="{Binding Author, StringFormat='Author: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,4,0,0"/>
-                        </StackPanel>
-                    </Grid>
-                </DataTemplate>
-            </ui:ListView.ItemTemplate>
-        </ui:ListView>
+        <!-- Main Content Area -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
+            <StackPanel>
+                <!-- Online Plugin Store Section -->
+                <TextBlock Text="🛒 Online Plugin Store / Repository" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <ui:Card x:Name="CardNoPluginsNotice" Visibility="Collapsed" Margin="0,0,0,16" Padding="14" Background="#15FF9900" BorderBrush="Orange" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Margin="0,0,10,0" VerticalAlignment="Center" />
+                        <TextBlock x:Name="TxtNoPluginsNotice" Text="⚠️ ไม่พบไฟล์ปลั๊กอิน (.dll) ใน GitHub Release เวอร์ชันล่าสุด (หรือไม่มีไฟล์ .dll ถูกแนบไว้บนหน้า Release)" VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    </StackPanel>
+                </ui:Card>
+                <ItemsControl x:Name="ItemsOnlineStore" Margin="0,0,0,24">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <ui:Card Margin="0,0,0,10" Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" />
+                                            <ui:Badge Content="{Binding Version}" Appearance="Secondary" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                            <ui:Badge Content="{Binding TrustLevel}" Appearance="Success" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding TargetGame, StringFormat='Target Game: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,2" FontWeight="Medium" />
+                                        <TextBlock Text="{Binding Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,6" />
+                                        <TextBlock Text="{Binding Permissions, StringFormat='Permissions: {0}'}" FontSize="12" Foreground="LightBlue" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
+                                        <ui:Button Content="Install Plugin" Icon="{ui:SymbolIcon ArrowDownload24}" Tag="{Binding}" Click="BtnInstallStorePlugin_Click" Appearance="Primary" Padding="12,6" />
+                                    </StackPanel>
+                                </Grid>
+                            </ui:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- Installed Plugins & Security Inspector Section -->
+                <TextBlock Text="🛡️ Installed Plugins &amp; Security Inspector" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                <ui:ListView x:Name="ListExtensions" SelectionMode="Single" Background="Transparent" BorderThickness="0">
+                    <ui:ListView.ItemTemplate>
+                        <DataTemplate>
+                            <ui:Card Margin="0,0,0,8" Padding="16">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
+                                            <ui:Badge Appearance="Secondary" Content="{Binding Version}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                            <ui:Badge Appearance="Success" Content="{Binding TargetGame}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                            <ui:Badge Appearance="Primary" Content="Verified Trust" Margin="8,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,6"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Permissions: 📁 Disk Access, 🌐 P2P Sync, ⚙️ Game API" FontSize="12" Foreground="LightBlue" Margin="0,0,16,0" />
+                                            <TextBlock Text="{Binding Author, StringFormat='Author: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </ui:Card>
+                        </DataTemplate>
+                    </ui:ListView.ItemTemplate>
+                </ui:ListView>
+            </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>
-

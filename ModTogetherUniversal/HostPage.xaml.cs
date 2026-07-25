@@ -238,31 +238,16 @@ namespace ModTogetherUniversal
 
         private void BtnKillHost_Click(object sender, RoutedEventArgs e)
         {
-            int killed = 0;
-            var currentPid = System.Diagnostics.Process.GetCurrentProcess().Id;
-            try
+            int port = 52100;
+            if (ToggleCustomPort?.IsChecked == true && int.TryParse(TxtCustomPort?.Text, out int parsedPort))
             {
-                foreach (var proc in System.Diagnostics.Process.GetProcessesByName("ModTogetherUniversal"))
-                {
-                    if (proc.Id != currentPid)
-                    {
-                        proc.Kill();
-                        killed++;
-                    }
-                }
-                foreach (var proc in System.Diagnostics.Process.GetProcessesByName("python"))
-                {
-                    // For simplicity, kill all python. In real app, check cmdline args.
-                    proc.Kill();
-                    killed++;
-                }
+                port = parsedPort;
             }
-            catch (Exception ex)
-            {
-                MainWindow.Instance?.Log($"⚠️ Error killing old host: {ex.Message}");
-            }
-            
-            MainWindow.Instance?.Log($"✅ Killed {killed} old background host process(es).");
+
+            int killed = RoomPage.KillAllModTogetherHostProcesses(port);
+            MainWindow.Instance?.Log($"✅ Killed {killed} background host process(es) & freed port {port}.");
+            LblHostStatus.Text = "Status: Ready";
+            LblHostStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
         }
 
         private void BtnCopyIp_Click(object sender, RoutedEventArgs e)

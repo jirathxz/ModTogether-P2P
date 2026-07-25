@@ -9,7 +9,10 @@
         Title="ModTogether - Universal Mod Manager" Height="850" Width="1100"
         MinHeight="600" MinWidth="800"
         WindowBackdropType="Mica"
-        ExtendsContentIntoTitleBar="True">
+        ExtendsContentIntoTitleBar="True"
+        AllowDrop="True"
+        DragOver="Window_DragOver"
+        Drop="Window_Drop">
     
     <Grid>
         <Grid.RowDefinitions>
@@ -25,25 +28,27 @@
         <!-- Update Alert -->
         <Border x:Name="UpdateAlertBar" Grid.Row="1" Background="#E6F1C40F" CornerRadius="4" Margin="16,8,16,0" Padding="12,8" Visibility="Collapsed">
             <Grid>
-                <TextBlock x:Name="LblUpdateAlert" Text="Update Available: v0.0.0" FontWeight="SemiBold" Foreground="Black" VerticalAlignment="Center" />
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="LblUpdateAlert" Text="Update Available: v0.0.0" FontWeight="SemiBold" Foreground="Black" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+                <WrapPanel Grid.Column="1" HorizontalAlignment="Right">
                     <ui:Button x:Name="BtnUpdateStandalone" Content="Update Standalone" Margin="0,0,8,0" Icon="{ui:SymbolIcon ArrowDown24}" Click="BtnUpdateStandalone_Click" Background="White" Foreground="Black" Visibility="Collapsed" />
                     <ui:Button x:Name="BtnUpdateLightweight" Content="Update Lightweight" Margin="0,0,8,0" Icon="{ui:SymbolIcon ArrowDown24}" Click="BtnUpdateLightweight_Click" Background="White" Foreground="Black" Visibility="Collapsed" />
                     <ui:Button x:Name="BtnUpdateManual" Content="Manual (GitHub)" Icon="{ui:SymbolIcon Open24}" Click="BtnUpdateManual_Click" Background="Transparent" BorderBrush="Black" Foreground="Black" />
-                </StackPanel>
+                </WrapPanel>
             </Grid>
         </Border>
 
         <ui:NavigationView x:Name="RootNavigation" Grid.Row="2" PaneDisplayMode="Left" 
-                           ScrollViewer.VerticalScrollBarVisibility="Disabled" 
-                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                            SelectionChanged="RootNavigation_SelectionChanged">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem x:Name="NavRoom" Content="Room (Host / Join)" Icon="{ui:SymbolIcon People24}" TargetPageType="{x:Type local:RoomPage}" />
                 <ui:NavigationViewItem x:Name="NavExplorer" Content="Mod Explorer" Icon="{ui:SymbolIcon FolderZip24}" TargetPageType="{x:Type local:ModExplorerPage}" />
 
                 <ui:NavigationViewItem x:Name="NavRecovery" Content="Recovery Mod" Icon="{ui:SymbolIcon Delete24}" TargetPageType="{x:Type local:RecoveryPage}" />
-                <ui:NavigationViewItem Content="Plugins" Icon="{ui:SymbolIcon Apps24}" TargetPageType="{x:Type local:PluginsPage}" />
+                <ui:NavigationViewItem x:Name="NavPlugins" Content="Plugins" Icon="{ui:SymbolIcon Apps24}" TargetPageType="{x:Type local:PluginsPage}" />
                 <ui:NavigationViewItem x:Name="NavSettings" Content="Settings" Icon="{ui:SymbolIcon Settings24}" TargetPageType="{x:Type local:SettingsPage}" />
             </ui:NavigationView.MenuItems>
         </ui:NavigationView>
@@ -131,7 +136,7 @@
                     <Grid Margin="0,8,0,0">
                         <ui:Button Content="Disconnect" Icon="{ui:SymbolIcon Dismiss24}" x:Name="BtnDisconnect" IsEnabled="False" Click="BtnDisconnect_Click" />
                         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.0.1 â€” by jirathxz</Hyperlink>
+                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.0.1 - by jirathxz</Hyperlink>
                         </TextBlock>
                     </Grid>
                 </StackPanel>

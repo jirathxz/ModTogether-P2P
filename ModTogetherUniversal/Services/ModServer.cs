@@ -18,6 +18,7 @@ namespace ModTogetherUniversal.Services
     {
         private WebApplication? _app;
         private CancellationTokenSource? _cts;
+        private HashSet<string>? _enabledMods;
         
         public string HostDir { get; private set; } = string.Empty;
         public string RoomToken { get; private set; } = string.Empty;
@@ -26,6 +27,7 @@ namespace ModTogetherUniversal.Services
 
         public ConcurrentDictionary<string, UserHealthState> ActiveUsers { get; } = new();
         public ConcurrentBag<string> KickedUsers { get; } = new();
+        public ConcurrentDictionary<string, bool> BannedUsers { get; } = new();
         public ConcurrentDictionary<string, string> DeletedMods { get; } = new();
 
         public event Action<string>? OnLog;
@@ -35,20 +37,35 @@ namespace ModTogetherUniversal.Services
         
         public void TriggerCacheRefresh() => OnCacheRefreshRequested?.Invoke();
 
+        public void SetEnabledMods(IEnumerable<string>? enabledMods)
+        {
+            var normalized = enabledMods?
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Select(NormalizeRelativePath)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            _enabledMods = normalized is { Count: > 0 } ? normalized : null;
+            TriggerCacheRefresh();
+        }
+
         public async Task StartAsync(string hostDir, int port, string roomToken)
         {
             HostDir = hostDir;
             RoomToken = roomToken;
             ActiveUsers.Clear();
             KickedUsers.Clear();
+            BannedUsers.Clear();
 
             var builder = WebApplication.CreateBuilder();
             builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
             builder.Logging.ClearProviders(); // Disable default logging for cleaner output
+            builder.Services.AddResponseCompression(options => { options.EnableForHttps = true; });
 
             _app = builder.Build();
 
-            // Middleware for Authentication
+            _app.UseResponseCompression();
+
+            // Middleware for Authentication & Banning
             _app.Use(async (context, next) =>
             {
                 if (context.Request.Path != "/docs")
@@ -71,8 +88,9 @@ namespace ModTogetherUniversal.Services
             });
 
             // Endpoints
-            _app.MapPost("/heartbeat", (string username, bool? isSynced, int? syncProgress, string? currentActivity) =>
+            _app.MapPost("/heartbeat", (string username, bool? isSynced, int? syncProgress, string? currentActivity, int? pingMs) =>
             {
+                if (BannedUsers.ContainsKey(username)) return Results.Json(new { status = "banned" });
                 if (KickedUsers.Contains(username)) return Results.Json(new { status = "kicked" });
                 
                 var state = ActiveUsers.GetOrAdd(username, _ => new UserHealthState());
@@ -80,6 +98,7 @@ namespace ModTogetherUniversal.Services
                 if (isSynced.HasValue) state.IsSynced = isSynced.Value;
                 if (syncProgress.HasValue) state.SyncProgress = syncProgress.Value;
                 if (currentActivity != null) state.CurrentActivity = currentActivity;
+                if (pingMs.HasValue) state.PingMs = pingMs.Value;
                 
                 return Results.Json(new { status = "ok" });
             });
@@ -91,7 +110,22 @@ namespace ModTogetherUniversal.Services
                 {
                     KickedUsers.Add(target);
                     ActiveUsers.TryRemove(target, out _);
+                    RecycleManager.Instance.HandleUserDisconnect(target, HostDir);
                     OnLog?.Invoke($"🚫 Kicked user: {target}");
+                }
+                return Results.Json(new { status = "ok" });
+            });
+
+            _app.MapPost("/ban", (HttpRequest request) =>
+            {
+                string target = request.Form["target"].ToString();
+                if (!string.IsNullOrEmpty(target))
+                {
+                    BannedUsers.TryAdd(target, true);
+                    KickedUsers.Add(target);
+                    ActiveUsers.TryRemove(target, out _);
+                    RecycleManager.Instance.HandleUserDisconnect(target, HostDir);
+                    OnLog?.Invoke($"⛔ Banned user: {target}");
                 }
                 return Results.Json(new { status = "ok" });
             });
@@ -101,15 +135,12 @@ namespace ModTogetherUniversal.Services
                 var mods = new Dictionary<string, long>();
                 if (Directory.Exists(HostDir))
                 {
-                    var files = Directory.GetFiles(HostDir, "*.*", SearchOption.AllDirectories)
-                        .Where(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || 
-                                    f.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) || 
-                                    f.EndsWith(".rar", StringComparison.OrdinalIgnoreCase));
+                    var files = Directory.GetFiles(HostDir, "*.*", SearchOption.AllDirectories);
                                     
                     foreach (var file in files)
                     {
                         var relPath = Path.GetRelativePath(HostDir, file).Replace("\\", "/");
-                        if (!relPath.StartsWith(".recycle_mods") && !file.EndsWith(".tmp") && !IsDuplicateDownload(file))
+                        if (!relPath.StartsWith(".recycle_mods") && !file.EndsWith(".tmp") && !IsDuplicateDownload(file) && IsModEnabled(relPath))
                         {
                             mods[relPath] = new FileInfo(file).Length;
                         }
@@ -121,10 +152,11 @@ namespace ModTogetherUniversal.Services
                     Username = kvp.Key, 
                     IsSynced = kvp.Value.IsSynced, 
                     SyncProgress = kvp.Value.SyncProgress,
-                    CurrentActivity = kvp.Value.CurrentActivity
+                    CurrentActivity = kvp.Value.CurrentActivity,
+                    PingMs = kvp.Value.PingMs
                 }).ToList();
                 
-                activeUsersList.Add(new UserSyncState { Username = $"{HostUsername} (Host)", IsSynced = true, SyncProgress = 100, CurrentActivity = "" });
+                activeUsersList.Add(new UserSyncState { Username = $"{HostUsername} (Host)", IsSynced = true, SyncProgress = 100, CurrentActivity = "", PingMs = 0 });
 
                 return Results.Json(new 
                 { 
@@ -180,6 +212,8 @@ namespace ModTogetherUniversal.Services
                 // Remove from deleted mods if it was there
                 DeletedMods.TryRemove(relPath, out _);
 
+                RecycleManager.Instance.RegisterOwner(relPath, username, size: file.Length);
+
                 OnLog?.Invoke($"[📥] Mod restored/uploaded by {username}: {relPath}");
                 OnModDownloaded?.Invoke(relPath);
                 OnCacheRefreshRequested?.Invoke();
@@ -189,6 +223,7 @@ namespace ModTogetherUniversal.Services
 
             _app.MapGet("/download/{*filepath}", (string filepath) =>
             {
+                if (!IsModEnabled(filepath)) return Results.NotFound();
                 var filePath = GetSafePath(HostDir, filepath);
                 if (!File.Exists(filePath)) return Results.NotFound();
                 
@@ -218,6 +253,17 @@ namespace ModTogetherUniversal.Services
             return System.Text.RegularExpressions.Regex.IsMatch(filename, @" \(\d+\)(\.[a-zA-Z0-9]+)?$");
         }
 
+        private bool IsModEnabled(string relativePath)
+        {
+            var enabledMods = _enabledMods;
+            if (enabledMods == null) return true;
+
+            var normalized = NormalizeRelativePath(relativePath);
+            return enabledMods.Contains(normalized) || enabledMods.Contains(Path.GetFileName(normalized));
+        }
+
+        private static string NormalizeRelativePath(string path) => path.Replace('\\', '/').TrimStart('/');
+
         private string GetSafePath(string baseDir, string relPath)
         {
             var cleanRelPath = relPath.TrimStart('/', '\\');
@@ -238,5 +284,6 @@ namespace ModTogetherUniversal.Services
         public bool IsSynced { get; set; } = false;
         public int SyncProgress { get; set; } = 0;
         public string CurrentActivity { get; set; } = "";
+        public int PingMs { get; set; } = 0;
     }
 }

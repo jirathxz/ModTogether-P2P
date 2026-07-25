@@ -14,11 +14,11 @@ namespace ModTogetherUniversal.Services
 
         public SettingsManager()
         {
-            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            var appFolder = Path.Combine(appData, "ModTogetherUniversal");
-            Directory.CreateDirectory(appFolder);
+            var docsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            var settingsFolder = Path.Combine(docsFolder, "ModTogether", "Settings");
+            Directory.CreateDirectory(settingsFolder);
             
-            _settingsFile = Path.Combine(appFolder, "settings.json");
+            _settingsFile = Path.Combine(settingsFolder, "settings.json");
             Current = Load();
         }
 

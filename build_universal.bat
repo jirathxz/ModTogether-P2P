@@ -12,13 +12,16 @@ echo.
 cd /d "%~dp0\ModTogetherUniversal"
 
 :: Step 0: Ensure dist folder exists and kill running instances
-echo [*] Checking and closing running instances...
+echo [*] Cleaning dist folder and closing running instances and build servers...
+taskkill /F /FI "IMAGENAME eq ModTogether*" /T >nul 2>&1
 taskkill /F /IM ModTogether_Universal_Standalone_x64.exe /T >nul 2>&1
 taskkill /F /IM ModTogether_Universal_Lightweight_x64.exe /T >nul 2>&1
 taskkill /F /IM ModTogetherUniversal.exe /T >nul 2>&1
+dotnet build-server shutdown >nul 2>&1
 
 if exist "*_wpftmp.csproj" del /Q "*_wpftmp.csproj" >nul 2>&1
-if not exist "..\dist" mkdir "..\dist"
+if exist "..\dist" rmdir /s /q "..\dist" >nul 2>&1
+mkdir "..\dist"
 
 :: Step 1: Restore
 echo.
@@ -31,29 +34,29 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo [+] Restore completed successfully.
 
-:: Step 2: Build Standalone
+:: Step 2: Build Lightweight
 echo.
-echo [*] [2/3] Building Standalone Edition (No .NET required, ~85MB)...
+echo [*] [2/3] Building Lightweight Edition (Requires .NET 8, ~10MB)...
 echo     Running dotnet publish...
-dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=false -p:PublishReadyToRun=true -p:DebugType=embedded -p:DebugSymbols=true -o "..\dist\Portable" -v m
-if %ERRORLEVEL% NEQ 0 (
-    echo.
-    echo [!] ERROR: Standalone build failed!
-    goto :error
-)
-echo [+] Standalone build completed successfully.
-
-:: Step 3: Build Lightweight
-echo.
-echo [*] [3/3] Building Lightweight Edition (Requires .NET 8, ~10MB)...
-echo     Running dotnet publish...
-dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=false -p:PublishReadyToRun=true -p:DebugType=embedded -p:DebugSymbols=true -o "..\dist\Lightweight" -v m
+dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=false -p:DebugType=embedded -p:DebugSymbols=true -o "..\dist\Lightweight" -v m
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] ERROR: Lightweight build failed!
     goto :error
 )
 echo [+] Lightweight build completed successfully.
+
+:: Step 3: Build Standalone
+echo.
+echo [*] [3/3] Building Standalone Edition (No .NET required, ~85MB)...
+echo     Running dotnet publish...
+dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -p:DebugType=embedded -p:DebugSymbols=true -o "..\dist\Standalone" -v m
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [!] ERROR: Standalone build failed!
+    goto :error
+)
+echo [+] Standalone build completed successfully.
 
 :: Step 4: Finalize
 echo.
@@ -63,35 +66,40 @@ ping 127.0.0.1 -n 2 > nul
 echo Building ModTogether.Extensions.MHW...
 cd ..
 dotnet build "ModTogether.Extensions.MHW\ModTogether.Extensions.MHW.csproj" -c Release
-if not exist "dist\Extensions" mkdir "dist\Extensions"
-copy /Y "ModTogether.Extensions.MHW\bin\Release\net8.0-windows\ModTogether.Extensions.MHW.dll" "dist\Extensions\"
+
+:: Create output subfolders
+if not exist "dist\Standalone\Extensions" mkdir "dist\Standalone\Extensions"
+if not exist "dist\Lightweight\Extensions" mkdir "dist\Lightweight\Extensions"
+
+:: Copy MHW extension DLL
+copy /Y "ModTogether.Extensions.MHW\bin\Release\net8.0-windows\ModTogether.Extensions.MHW.dll" "dist\Standalone\Extensions\" >nul
+copy /Y "ModTogether.Extensions.MHW\bin\Release\net8.0-windows\ModTogether.Extensions.MHW.dll" "dist\Lightweight\Extensions\" >nul
+
 cd "ModTogetherUniversal"
 
-if exist "..\dist\Portable\ModTogetherUniversal.exe" (
-    move /y "..\dist\Portable\ModTogetherUniversal.exe" "..\dist\ModTogether_Universal_Standalone_x64.exe" >nul
-    move /y "..\dist\Portable\*.*" "..\dist\" >nul 2>&1
+:: Rename Standalone executable
+if exist "..\dist\Standalone\ModTogetherUniversal.exe" (
+    move /y "..\dist\Standalone\ModTogetherUniversal.exe" "..\dist\Standalone\ModTogether_Universal_Standalone_x64.exe" >nul
 )
+
+:: Rename Lightweight executable
 if exist "..\dist\Lightweight\ModTogetherUniversal.exe" (
-    move /y "..\dist\Lightweight\ModTogetherUniversal.exe" "..\dist\ModTogether_Universal_Lightweight_x64.exe" >nul
-    move /y "..\dist\Lightweight\*.*" "..\dist\" >nul 2>&1
+    move /y "..\dist\Lightweight\ModTogetherUniversal.exe" "..\dist\Lightweight\ModTogether_Universal_Lightweight_x64.exe" >nul
 )
 
-:: Cleanup intermediate folders
-if exist "..\dist\Portable" rmdir /s /q "..\dist\Portable"
-if exist "..\dist\Lightweight" rmdir /s /q "..\dist\Lightweight"
-
-:: Copy Extensions folder
-if not exist "..\dist\Extensions" mkdir "..\dist\Extensions"
-xcopy /E /I /Y "Extensions" "..\dist\Extensions" >nul
-if exist "..\dist\Extensions\ModTogether.API.dll" del /Q "..\dist\Extensions\ModTogether.API.dll"
+:: Copy Extensions assets to both folders
+xcopy /E /I /Y "Extensions" "..\dist\Standalone\Extensions" >nul
+xcopy /E /I /Y "Extensions" "..\dist\Lightweight\Extensions" >nul
+if exist "..\dist\Standalone\Extensions\ModTogether.API.dll" del /Q "..\dist\Standalone\Extensions\ModTogether.API.dll"
+if exist "..\dist\Lightweight\Extensions\ModTogether.API.dll" del /Q "..\dist\Lightweight\Extensions\ModTogether.API.dll"
 
 echo.
 echo =====================================================================
 echo   [SUCCESS] Build finished without errors.
 echo =====================================================================
-echo   Output files located in 'dist' folder:
-echo    - ModTogether_Universal_Standalone_x64.exe
-echo    - ModTogether_Universal_Lightweight_x64.exe
+echo   Output files organized into 'dist' folder:
+echo    - Standalone:  dist\Standalone\ModTogether_Universal_Standalone_x64.exe
+echo    - Lightweight: dist\Lightweight\ModTogether_Universal_Lightweight_x64.exe
 echo =====================================================================
 echo.
 pause

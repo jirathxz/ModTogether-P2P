@@ -9,13 +9,23 @@
     <ApplicationIcon>..\logo\mhw-512.ico</ApplicationIcon>
     <NoWarn>$(NoWarn);NU1902</NoWarn>
 
-    <!-- Anti-Virus / VirusTotal Optimization -->
+    <!-- Anti-Virus / VirusTotal & PE Metadata Optimization -->
     <DebugType>embedded</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <PublishReadyToRun>true</PublishReadyToRun>
     <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
     <EventSourceSupport>false</EventSourceSupport>
     <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+
+    <!-- PE Assembly Version Information (Fixes SecureAge AI Heuristics) -->
+    <Title>ModTogether Universal</Title>
+    <Product>ModTogether Universal</Product>
+    <Description>Real-time Peer-to-Peer Mod Synchronization &amp; Management Suite for PC Games</Description>
+    <Company>jirathx</Company>
+    <Copyright>Copyright © 2026 jirathx. Released under MIT License.</Copyright>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>

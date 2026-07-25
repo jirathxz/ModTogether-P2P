@@ -57,11 +57,7 @@ namespace ModTogetherUniversal
 
             if (Directory.Exists(recycleDir))
             {
-                var files = Directory.GetFiles(recycleDir, "*.*")
-                    .Where(f => f.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) || 
-                                f.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) || 
-                                f.EndsWith(".rar", StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                var files = Directory.GetFiles(recycleDir, "*.*", SearchOption.AllDirectories).ToList();
 
                 foreach (var file in files)
                 {
@@ -144,13 +140,16 @@ namespace ModTogetherUniversal
                             File.Move(recyclePath, targetPath, true);
                             Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log($"♻️ Restored mod: {mod.Filename}"));
                             
-                            // Remove from Server's deleted list if hosting so it gets synced again
+                            // Trigger P2P sync for room
                             if (App.Server != null && App.Server.IsRunning)
                             {
                                 App.Server.DeletedMods.TryRemove(mod.Filename, out _);
                                 App.Server.TriggerCacheRefresh();
                             }
-                            // Note: Clients don't have an explicit 'restore' API yet, but next sync they will upload it back to Host since it's missing on host
+                            else if (App.Client != null && App.Client.IsConnected)
+                            {
+                                Task.Run(async () => await App.Client.UploadModAsync(targetPath, mod.Filename));
+                            }
                         }
                         catch (Exception ex)
                         {

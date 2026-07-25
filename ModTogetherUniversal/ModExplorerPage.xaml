@@ -23,6 +23,17 @@
                 </MenuItem.Icon>
             </MenuItem>
             <Separator />
+            <MenuItem Header="Move to Preset..." SubmenuOpened="MenuMoveToPreset_SubmenuOpened">
+                <MenuItem.Icon>
+                    <ui:SymbolIcon Symbol="ArrowRight24" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <MenuItem Header="Copy to Preset..." SubmenuOpened="MenuCopyToPreset_SubmenuOpened">
+                <MenuItem.Icon>
+                    <ui:SymbolIcon Symbol="Copy24" />
+                </MenuItem.Icon>
+            </MenuItem>
+            <Separator />
             <MenuItem Header="{Binding DataContext.MenuDeleteText, RelativeSource={RelativeSource AncestorType=Page}}" Click="MenuItem_Delete_Click">
                 <MenuItem.Icon>
                     <ui:SymbolIcon Symbol="Delete24" Foreground="Red" />
@@ -41,33 +52,59 @@
         <!-- Header Section -->
         <StackPanel Grid.Row="0" Margin="0,0,0,16">
             <TextBlock x:Name="TxtTitle" Text="Mod Explorer" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8" />
-            <TextBlock x:Name="TxtDesc" Text="Generic mod manager. Select a target path and choose how mods should be installed." Foreground="Gray" TextWrapping="Wrap" />
+            <TextBlock x:Name="TxtDesc" Text="Generic mod manager. Select a target path and choose how mods should be installed." Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,8" />
+
+            <!-- Extension Plugin Notice Banner -->
+            <ui:Card x:Name="CardPluginNotice" Visibility="Collapsed" Margin="0,4,0,0" Background="#2000FF7F" BorderBrush="LightGreen" BorderThickness="1" Padding="12">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="CheckmarkCircle24" Foreground="LightGreen" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TxtPluginNotice" Text="⚡ Extension Plugin Active: Mod installation for this game is managed by the extension plugin. Use the dedicated Extension Plugin tab to manage and install mods." VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+            </ui:Card>
         </StackPanel>
 
-        <!-- Configuration Section -->
+        <!-- Configuration & Presets Section -->
         <ui:Card Grid.Row="1" Margin="0,0,0,16" Padding="16">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="16" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+            <StackPanel>
+                <!-- Row 1: Mod Folder Path -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="TxtModFolderLabel" Grid.Column="0" Text="Mod Install Folder:" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    <TextBlock x:Name="TxtModFolderValue" Grid.Column="1" Text="Not configured — please set in Settings" VerticalAlignment="Center" Foreground="Gray" TextTrimming="CharacterEllipsis" />
+                </Grid>
 
-                <!-- Mod Folder Path (from Settings, read-only) -->
-                <TextBlock x:Name="TxtModFolderLabel" Grid.Row="0" Grid.Column="0" Text="Mod Install Folder:" VerticalAlignment="Center" Margin="0,0,16,0" FontWeight="SemiBold" />
-                <TextBlock x:Name="TxtModFolderValue" Grid.Row="0" Grid.Column="1" Text="Not configured — please set in Settings" VerticalAlignment="Center" Foreground="Gray" TextTrimming="CharacterEllipsis" />
+                <!-- Row 2: Install Type -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Name="TxtInstallTypeLabel" Grid.Column="0" Text="Install Type:" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    <ComboBox Grid.Column="1" x:Name="CmbInstallType" SelectedIndex="0" MaxWidth="400" HorizontalAlignment="Left" SelectionChanged="CmbInstallType_SelectionChanged">
+                        <ComboBoxItem x:Name="CmbItemSingle" Content="Single File (Copy files directly)" />
+                        <ComboBoxItem x:Name="CmbItemExtract" Content="Extract File (Extract archive into Target Path)" />
+                    </ComboBox>
+                </Grid>
 
-                <!-- Install Type -->
-                <TextBlock x:Name="TxtInstallTypeLabel" Grid.Row="2" Grid.Column="0" Text="Install Type:" VerticalAlignment="Center" Margin="0,0,16,0" FontWeight="SemiBold" />
-                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="CmbInstallType" SelectedIndex="0" MaxWidth="300" HorizontalAlignment="Left">
-                    <ComboBoxItem x:Name="CmbItemSingle" Content="Single File (Copy files directly)" />
-                    <ComboBoxItem x:Name="CmbItemExtract" Content="Extract File (Extract archive into Target Path)" />
-                </ComboBox>
-            </Grid>
+                <!-- Row 3: Mod Profiles & Presets -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="160" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Mod Profile Preset:" Grid.Column="0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    <ComboBox x:Name="CmbExplorerPresets" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" SelectionChanged="CmbExplorerPresets_SelectionChanged" HorizontalAlignment="Stretch" />
+                    <ui:TextBox x:Name="TxtProfileName" PlaceholderText="New Profile Name..." Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Center" />
+                    <ui:Button x:Name="BtnSaveProfile" Content="Save Profile" Click="BtnSaveProfile_Click" Grid.Column="3" Margin="0,0,8,0" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" />
+                    <ui:Button x:Name="BtnDeleteProfile" Content="Delete" Click="BtnDeleteProfile_Click" Grid.Column="4" Appearance="Danger" Icon="{ui:SymbolIcon Delete24}" />
+                </Grid>
+            </StackPanel>
         </ui:Card>
 
 
@@ -80,6 +117,8 @@
 
             <!-- Toolbar -->
             <WrapPanel Grid.Row="0" Margin="0,0,0,8" VerticalAlignment="Center">
+                <ui:Button x:Name="BtnInstallChecked" Content="⚡ Install Checked" Icon="{ui:SymbolIcon CheckmarkCircle24}" Click="BtnInstallChecked_Click" Appearance="Success" Margin="0,0,8,4" />
+                <ui:Button x:Name="BtnUninstallChecked" Content="❎ Uninstall Checked" Icon="{ui:SymbolIcon DismissCircle24}" Click="BtnUninstallChecked_Click" Appearance="Secondary" Margin="0,0,8,4" />
                 <ui:Button x:Name="BtnCheckAll" Content="Check All" Icon="{ui:SymbolIcon CheckmarkSquare24}" Click="BtnCheckAll_Click" Margin="0,0,8,4" />
                 <ui:Button x:Name="BtnUncheckAll" Content="Uncheck All" Icon="{ui:SymbolIcon Square24}" Click="BtnUncheckAll_Click" Margin="0,0,8,4" />
                 <ui:Button x:Name="BtnScanConflicts" Content="Scan Conflicts ⚔️" Icon="{ui:SymbolIcon Warning24}" Click="BtnScanConflicts_Click" Margin="0,0,8,4" />
@@ -124,7 +163,7 @@
                 </ListView.ItemContainerStyle>
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Width="60">
+                        <GridViewColumn Width="130">
                             <GridViewColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <TextBlock Text="{Binding DataContext.ColInstallText, RelativeSource={RelativeSource AncestorType=Page}}" FontWeight="SemiBold" />
@@ -132,7 +171,10 @@
                             </GridViewColumn.HeaderTemplate>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Checked="Mod_Checked" Unchecked="Mod_Unchecked" HorizontalAlignment="Center" />
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding DataContext.IsInstallAllowed, RelativeSource={RelativeSource AncestorType=Page}}" Checked="Mod_Checked" Unchecked="Mod_Unchecked" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="{Binding DataContext.InstallToolTip, RelativeSource={RelativeSource AncestorType=Page}}" />
+                                        <ui:Button Content="Install" Padding="6,2" FontSize="11" IsEnabled="{Binding DataContext.IsInstallAllowed, RelativeSource={RelativeSource AncestorType=Page}}" Tag="{Binding}" Click="BtnInstallRow_Click" Appearance="Primary" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -144,10 +186,11 @@
                             </GridViewColumn.HeaderTemplate>
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Visibility="{Binding ConflictVisibility}" Margin="0,0,6,0" ToolTip="{Binding ConflictWarningText}" />
-                                        <TextBlock Text="{Binding Filename}" VerticalAlignment="Center" FontWeight="Medium" Foreground="{DynamicResource TextFillColorPrimaryBrush}" ToolTip="{Binding ConflictWarningText}" />
-                                    </StackPanel>
+                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                         <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Visibility="{Binding ConflictVisibility}" Margin="0,0,6,0" ToolTip="{Binding ConflictWarningText}" />
+                                         <TextBlock Text="{Binding Filename}" VerticalAlignment="Center" FontWeight="Medium" Foreground="{DynamicResource TextFillColorPrimaryBrush}" ToolTip="{Binding ConflictWarningText}" Margin="0,0,8,0" />
+                                         <ui:Badge Content="{Binding OwnersBadgeText}" Visibility="{Binding OwnersBadgeVisibility}" Appearance="Primary" VerticalAlignment="Center" ToolTip="Players who own/share this mod" />
+                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

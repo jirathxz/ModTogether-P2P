@@ -29,16 +29,22 @@ namespace ModTogetherUniversal
             AppDomain.CurrentDomain.UnhandledException += (s, args) => 
             {
                 var ex = args.ExceptionObject as Exception;
-                string logPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "error.log");
-                System.IO.File.WriteAllText(logPath, ex?.ToString());
+                if (Settings?.Current?.EnableErrorLog ?? true)
+                {
+                    string logPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "error.log");
+                    System.IO.File.WriteAllText(logPath, ex?.ToString());
+                }
                 System.Windows.MessageBox.Show("Fatal Crash: " + ex?.Message + "\n\n" + ex?.StackTrace);
             };
             
             DispatcherUnhandledException += (s, args) => 
             {
                 var ex = args.Exception.InnerException ?? args.Exception;
-                string logPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "error.log");
-                System.IO.File.WriteAllText(logPath, ex.ToString());
+                if (Settings?.Current?.EnableErrorLog ?? true)
+                {
+                    string logPath = System.IO.Path.Combine(System.AppContext.BaseDirectory, "error.log");
+                    System.IO.File.WriteAllText(logPath, ex.ToString());
+                }
                 System.Windows.MessageBox.Show("UI Crash: " + ex.Message + "\n\n" + ex.StackTrace);
                 args.Handled = true;
             };

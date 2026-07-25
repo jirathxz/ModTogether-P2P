@@ -12,7 +12,18 @@ namespace ModTogetherUniversal
 
         private async void BtnJoin_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(TxtIp.Text)) return;
+            if (string.IsNullOrWhiteSpace(TxtIp.Text))
+            {
+                MainWindow.Instance?.Log("Enter a room address before joining.");
+                TxtIp.Focus();
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(TxtPin.Text))
+            {
+                MainWindow.Instance?.Log("Enter the room PIN before joining.");
+                TxtPin.Focus();
+                return;
+            }
             var parts = TxtIp.Text.Split(':');
             string ip = parts[0];
             int port = parts.Length > 1 && int.TryParse(parts[1], out int p) ? p : 52100;

@@ -1,9 +1,12 @@
 using System.Collections.Generic;
+using System.Text;
 
 namespace ModTogetherUniversal.Models
 {
     public static class I18N
     {
+        private static readonly Encoding Windows1252 = Encoding.GetEncoding(1252);
+        private static readonly UTF8Encoding StrictUtf8 = new(false, true);
         public static readonly Dictionary<string, Dictionary<string, string>> Translations = new()
         {
             {
@@ -29,6 +32,12 @@ namespace ModTogetherUniversal.Models
                     {"btn_kill_host", "ปิดห้องเก่า"},
                     {"copy_ip", "คัดลอก IP"},
                     {"copy_pin", "คัดลอก PIN"},
+                    {"host_upnp", "เปิดพอร์ตเร้าเตอร์อัตโนมัติ (UPnP)"},
+                    {"host_preset_label", "โปรไฟล์ม็อด (Preset):"},
+                    {"host_preset_save", "บันทึกโปรไฟล์"},
+                    {"host_btn_kick", "เตะออก"},
+                    {"host_btn_ban", "แบน"},
+                    {"host_members", "👥 สมาชิกในเซสชัน"},
                     
                     {"client_title", "เข้าร่วมห้อง (Client)"},
                     {"client_ip", "Host IP (เช่น 192.168.1.5:52100)"},
@@ -101,12 +110,20 @@ namespace ModTogetherUniversal.Models
                     {"plugins_title", "ปลั๊กอิน (Plugins)"},
                     {"plugins_desc", "จัดการและโหลดปลั๊กอิน (Plugins) สำหรับเกมต่างๆ"},
                     {"plugins_btn_open", "เปิดโฟลเดอร์ปลั๊กอิน"},
+                    {"plugins_btn_reload", "รีโหลดปลั๊กอิน"},
 
                     {"lbl_mod_dir", "โฟลเดอร์ม็อดทั่วไป (Mod Folder Path):"},
                     {"desc_mod_dir", "เลือกโฟลเดอร์ที่จะใช้ติดตั้งม็อดผ่าน Mod Explorer"},
                     {"placeholder_mod_dir", "เลือกโฟลเดอร์ม็อดหรือโฟลเดอร์เกม..."},
                     {"btn_select_mod_folder", "เลือกโฟลเดอร์"},
-                    {"btn_reset_mod_path", "รีเซ็ต"}
+                    {"btn_reset_mod_path", "รีเซ็ต"},
+
+                    {"lbl_debug_log", "บันทึกข้อมูล Debug (Debug Log)"},
+                    {"desc_debug_log", "แสดงข้อความวิเคราะห์การทำงานระดับละเอียดใน Console"},
+                    {"lbl_error_log", "บันทึกข้อผิดพลาดลงไฟล์ (Error Log)"},
+                    {"desc_error_log", "บันทึกประวัติข้อผิดพลาดรุนแรงลงไฟล์ error.log อัตโนมัติ"},
+                    {"lbl_plugin_security", "ความปลอดภัยของปลั๊กอิน (Plugin Security Inspection)"},
+                    {"desc_plugin_security", "ตรวจสอบลายเซ็นดิจิทัล รหัส SHA-256 และสแกน API ที่เสี่ยงภัยก่อนโหลดปลั๊กอิน"}
                 }
             },
             {
@@ -135,6 +152,12 @@ namespace ModTogetherUniversal.Models
                     {"btn_kill_host", "Kill Old Hosts"},
                     {"copy_ip", "Copy IP"},
                     {"copy_pin", "Copy PIN"},
+                    {"host_upnp", "Auto Port Forward (UPnP)"},
+                    {"host_preset_label", "Modpack Preset:"},
+                    {"host_preset_save", "Save Preset"},
+                    {"host_btn_kick", "Kick"},
+                    {"host_btn_ban", "Ban"},
+                    {"host_members", "👥 Session Members"},
                     
                     {"client_title", "Join Session (Client)"},
                     {"client_ip", "Host IP (e.g. 192.168.1.5:52100)"},
@@ -157,7 +180,7 @@ namespace ModTogetherUniversal.Models
                     {"btn_delete_all_permanently", "Delete Checked Permanently"},
                     
                     {"btn_validate", "Validate"},
-                    {"btn_backup", "Backup nativePC"},
+                    {"btn_backup", "Backup Mods"},
                     
                     {"btn_delete_checked", "Delete Checked"},
                     
@@ -205,12 +228,20 @@ namespace ModTogetherUniversal.Models
                     {"plugins_title", "Plugins"},
                     {"plugins_desc", "Manage and load plugins for different games."},
                     {"plugins_btn_open", "Open Plugins Folder"},
+                    {"plugins_btn_reload", "Reload Plugins"},
 
                     {"lbl_mod_dir", "Mod Folder Path:"},
                     {"desc_mod_dir", "Select the folder where Mod Explorer will install mods."},
                     {"placeholder_mod_dir", "Select mod or game folder..."},
                     {"btn_select_mod_folder", "Select Folder"},
-                    {"btn_reset_mod_path", "Reset"}
+                    {"btn_reset_mod_path", "Reset"},
+
+                    {"lbl_debug_log", "Debug Logging"},
+                    {"desc_debug_log", "Enable verbose debugging output in Console Log."},
+                    {"lbl_error_log", "Error Log File Writing"},
+                    {"desc_error_log", "Automatically write crash tracebacks to error.log."},
+                    {"lbl_plugin_security", "Plugin Security Verification"},
+                    {"desc_plugin_security", "Verify SHA-256 signatures and inspect plugin DLL bytecode before execution."}
                 }
             }
         };
@@ -219,13 +250,35 @@ namespace ModTogetherUniversal.Models
         {
             if (Translations.TryGetValue(lang, out var dict) && dict.TryGetValue(key, out var val))
             {
-                return val;
+                return RepairMojibake(val);
             }
             if (Translations.TryGetValue("en", out var enDict) && enDict.TryGetValue(key, out var enVal))
             {
-                return enVal;
+                return RepairMojibake(enVal);
             }
             return key;
         }
+
+        private static string RepairMojibake(string value)
+        {
+            for (var attempt = 0; attempt < 2 && LooksLikeMojibake(value); attempt++)
+            {
+                try
+                {
+                    var repaired = StrictUtf8.GetString(Windows1252.GetBytes(value));
+                    if (repaired == value) break;
+                    value = repaired;
+                }
+                catch (DecoderFallbackException)
+                {
+                    break;
+                }
+            }
+
+            return value;
+        }
+
+        private static bool LooksLikeMojibake(string value) =>
+            value.Contains('Ã') || value.Contains('Â') || value.Contains('â') || value.Contains('ð') || value.Contains('Å') || value.Contains('à');
     }
 }
