@@ -11,10 +11,8 @@ namespace ModTogetherUniversal
 {
     public partial class RoomPage : Page
     {
-        private const string AllModsPreset = "All installed mods";
         private bool _isHosting = false;
         private System.Threading.CancellationTokenSource? _statusMonitorCancellation;
-        private bool _loadingPresets;
 
         public RoomPage()
         {
@@ -54,7 +52,6 @@ namespace ModTogetherUniversal
                 }
 
                 StartStatusMonitor();
-                LoadPresets();
             };
             Unloaded += (_, _) => StopStatusMonitor();
 
@@ -65,21 +62,7 @@ namespace ModTogetherUniversal
 
         }
 
-        private void LoadPresets(string? selectedName = null)
-        {
-            _loadingPresets = true;
-            var savedPreset = Services.SessionManager.Instance.State.SelectedRoomPreset;
-            var currentSelection = selectedName ?? CmbModpackPreset.SelectedItem as string ?? savedPreset;
-            var presets = Services.ModpackManager.Instance.GetPresetNames();
-            CmbModpackPreset.Items.Clear();
-            CmbModpackPreset.Items.Add(AllModsPreset);
-            foreach (var name in presets)
-            {
-                CmbModpackPreset.Items.Add(name);
-            }
-            CmbModpackPreset.SelectedItem = CmbModpackPreset.Items.Contains(currentSelection) ? currentSelection : AllModsPreset;
-            _loadingPresets = false;
-        }
+
 
         private void StartStatusMonitor()
         {
@@ -154,16 +137,12 @@ namespace ModTogetherUniversal
                                  LblHostPin.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(160, 160, 160));
                                  
                                  bool isClientActive = App.Client != null && App.Client.IsConnected;
-                                 if (CmbModpackPreset != null) CmbModpackPreset.IsEnabled = !isClientActive;
-                                 if (BtnSavePreset != null) BtnSavePreset.IsEnabled = !isClientActive;
                              });
                              continue;
                          }
 
                          await Application.Current.Dispatcher.InvokeAsync(() =>
                          {
-                             if (CmbModpackPreset != null) CmbModpackPreset.IsEnabled = false;
-                             if (BtnSavePreset != null) BtnSavePreset.IsEnabled = false;
                          });
 
                         // We are hosting, update the active users UI
@@ -194,10 +173,11 @@ namespace ModTogetherUniversal
                                  var activePlugin = Services.PluginManager.Instance.LoadedPlugins.FirstOrDefault();
                                  string gameName = activePlugin?.TargetGame ?? "Monster Hunter: World";
                                  Services.DiscordRpcService.Instance.UpdatePresence($"Playing ModTogether | {gameName}", "Host Room", users.Count, 4, App.Server.RoomToken);
-                                foreach (var u in users)
-                                {
-                                    ListSessionMembers.Items.Add(u);
-                                }
+                                 ListSessionMembers.Items.Clear();
+                                 foreach (var u in users)
+                                 {
+                                     ListSessionMembers.Items.Add(u);
+                                 }
                                 TxtSessionEmpty.Visibility = Visibility.Collapsed;
                                 LblSessionSummary.Text = $"{users.Count} member{(users.Count == 1 ? string.Empty : "s")} connected · {users.Count(u => u.IsSynced)} ready";
                             }
@@ -370,9 +350,7 @@ namespace ModTogetherUniversal
                 string cacheDir = System.IO.Path.Combine(hostDir, "GameMods");
                 System.IO.Directory.CreateDirectory(cacheDir);
 
-                var selectedPreset = CmbModpackPreset.SelectedItem as string;
-                var profile = selectedPreset == AllModsPreset ? null : Services.ModpackManager.Instance.GetProfile(selectedPreset ?? string.Empty);
-                App.Server.SetEnabledMods(profile?.EnabledMods);
+                App.Server.SetEnabledMods(null);
                 await App.Server.StartAsync(cacheDir, port, token);
                 App.Watcher.Start(cacheDir);
 
@@ -632,64 +610,7 @@ namespace ModTogetherUniversal
         {
         }
 
-        private void CmbModpackPreset_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (_loadingPresets || CmbModpackPreset.SelectedItem is not string presetName)
-            {
-                return;
-            }
 
-            bool isSessionActive = (App.Server != null && App.Server.IsRunning) || (App.Client != null && App.Client.IsConnected);
-            if (isSessionActive)
-            {
-                MessageBox.Show(
-                    "⚠️ Changing Mod Presets is strictly locked while an active room session is in progress (Hosting or Joined).\n\nPlease stop hosting or disconnect from the room first to prevent critical synchronization errors.",
-                    "Preset Locked During Session", MessageBoxButton.OK, MessageBoxImage.Warning);
-                _loadingPresets = true;
-                CmbModpackPreset.SelectedItem = e.RemovedItems.Count > 0 ? e.RemovedItems[0] : AllModsPreset;
-                _loadingPresets = false;
-                return;
-            }
-
-            Services.SessionManager.Instance.State.SelectedRoomPreset = presetName;
-            Services.SessionManager.Instance.Save();
-
-            string gameDir = App.Settings.Current.GameDirectory;
-            if (string.IsNullOrWhiteSpace(gameDir)) gameDir = System.AppDomain.CurrentDomain.BaseDirectory;
-            string cacheDir = System.IO.Path.Combine(gameDir, "GameMods");
-
-            if (presetName == AllModsPreset || presetName.Contains("Default") || presetName.Contains("All Mods"))
-            {
-                bool restored = Services.ModpackManager.Instance.RestoreOriginalMods(cacheDir);
-                MainWindow.Instance?.Log(restored ? "✅ Restored original mods from .stash." : "Activated Default Mods.");
-            }
-            else
-            {
-                bool loaded = Services.ModpackManager.Instance.LoadPreset(presetName, cacheDir);
-                if (loaded)
-                {
-                    MainWindow.Instance?.Log($"✅ Loaded Modpack Preset '{presetName}' (Original mods safely stashed in .stash)");
-                }
-            }
-
-            App.Server?.TriggerCacheRefresh();
-        }
-
-        private void BtnSavePreset_Click(object sender, RoutedEventArgs e)
-        {
-            string name = TxtPresetName != null && !string.IsNullOrWhiteSpace(TxtPresetName.Text) 
-                ? TxtPresetName.Text.Trim() 
-                : $"Preset_{DateTime.Now:yyyyMMdd_HHmmss}";
-
-            string gameDir = App.Settings.Current.GameDirectory;
-            if (string.IsNullOrWhiteSpace(gameDir)) gameDir = System.AppDomain.CurrentDomain.BaseDirectory;
-            string cacheDir = System.IO.Path.Combine(gameDir, "GameMods");
-
-            Services.ModpackManager.Instance.SavePreset(name, cacheDir);
-            MainWindow.Instance?.Log($"✅ Saved active mod files to: Documents/ModTogether/Presets/{name}");
-            if (TxtPresetName != null) TxtPresetName.Text = "";
-            LoadPresets(name);
-        }
 
         private bool IsHostUser(string username)
         {

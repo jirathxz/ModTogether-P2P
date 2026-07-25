@@ -39,18 +39,6 @@
 
                         <Expander Header="Advanced room settings" Margin="0,0,0,16">
                             <StackPanel Margin="0,12,0,0">
-                                <StackPanel Margin="0,0,0,12">
-                                    <TextBlock x:Name="LblPresetHeader" Text="Modpack preset" FontSize="13" FontWeight="Medium" Margin="0,0,0,4" />
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <ComboBox x:Name="CmbModpackPreset" SelectionChanged="CmbModpackPreset_SelectionChanged" Grid.Column="0" Margin="0,0,8,0" />
-                                        <ui:Button x:Name="BtnSavePreset" Content="Save current mods" Click="BtnSavePreset_Click" Grid.Column="1" Appearance="Secondary" />
-                                    </Grid>
-                                </StackPanel>
-                                <ui:TextBox x:Name="TxtPresetName" PlaceholderText="Name for a new preset (optional)" Margin="0,0,0,12" />
                                 <ui:ToggleSwitch Content="Use a custom PIN" x:Name="ToggleCustomPin" Checked="ToggleCustomPin_Changed" Unchecked="ToggleCustomPin_Changed" Margin="0,0,0,4"/>
                                 <ui:TextBox PlaceholderText="Six-character PIN" MaxLength="6" IsEnabled="False" x:Name="TxtCustomPin" Margin="0,0,0,12" />
                                 <ui:ToggleSwitch Content="Use a custom port" x:Name="ToggleCustomPort" Checked="ToggleCustomPort_Changed" Unchecked="ToggleCustomPort_Changed" Margin="0,0,0,4"/>

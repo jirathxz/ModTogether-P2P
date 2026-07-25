@@ -42,7 +42,7 @@
         </ContextMenu>
     </Page.Resources>
 
-    <Grid Margin="24">
+    <Grid Margin="24" Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=ui:NavigationView}}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

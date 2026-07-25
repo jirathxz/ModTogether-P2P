@@ -26,6 +26,22 @@ namespace ModTogetherUniversal
             _isLoaded = false;
             TxtgameDir.Text = App.Settings.Current.GameDirectory;
 
+            bool isSessionActive = (App.Server != null && App.Server.IsRunning) || (App.Client != null && App.Client.IsConnected);
+            if (BtnSelectFolder != null) BtnSelectFolder.IsEnabled = !isSessionActive;
+            if (BtnResetPath != null) BtnResetPath.IsEnabled = !isSessionActive;
+            if (CmbGameProfiles != null) CmbGameProfiles.IsEnabled = !isSessionActive;
+            
+            if (isSessionActive)
+            {
+                if (TxtgameDir != null) TxtgameDir.ToolTip = "Locked while an active room session is in progress.";
+                if (CmbGameProfiles != null) CmbGameProfiles.ToolTip = "Locked while an active room session is in progress.";
+            }
+            else
+            {
+                if (TxtgameDir != null) TxtgameDir.ToolTip = null;
+                if (CmbGameProfiles != null) CmbGameProfiles.ToolTip = null;
+            }
+
             if (ToggleDebugLog != null) ToggleDebugLog.IsChecked = App.Settings.Current.EnableDebugLog;
             if (ToggleErrorLog != null) ToggleErrorLog.IsChecked = App.Settings.Current.EnableErrorLog;
             if (TogglePluginSecurity != null) TogglePluginSecurity.IsChecked = App.Settings.Current.StrictPluginSecurity;

@@ -26,10 +26,26 @@ namespace ModTogetherUniversal.Services
             return dir;
         }
 
-        public string GetStashPath()
+        public string GetAllModsPath()
         {
             string docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            return Path.Combine(docsPath, "ModTogether", ".stash");
+            string stashPath = Path.Combine(docsPath, "ModTogether", ".stash");
+            string allModsPath = Path.Combine(docsPath, "ModTogether", "AllMods");
+            
+            if (Directory.Exists(stashPath) && !Directory.Exists(allModsPath))
+            {
+                try { Directory.Move(stashPath, allModsPath); } catch { }
+            }
+            return allModsPath;
+        }
+
+        public void SaveOriginalMods(string activeModsDir)
+        {
+            if (string.IsNullOrWhiteSpace(activeModsDir) || !Directory.Exists(activeModsDir)) return;
+            string allModsDir = GetAllModsPath();
+            ClearDirectory(allModsDir);
+            Directory.CreateDirectory(allModsDir);
+            CopyDirectory(activeModsDir, allModsDir);
         }
 
         public string GetPresetDirectory(string name)
@@ -87,13 +103,6 @@ namespace ModTogetherUniversal.Services
             if (string.IsNullOrWhiteSpace(activeModsDir)) return false;
             Directory.CreateDirectory(activeModsDir);
 
-            string stashDir = GetStashPath();
-            if (!Directory.Exists(stashDir))
-            {
-                Directory.CreateDirectory(stashDir);
-                CopyDirectory(activeModsDir, stashDir);
-            }
-
             ClearDirectory(activeModsDir);
 
             CopyDirectory(presetDir, activeModsDir);
@@ -102,21 +111,15 @@ namespace ModTogetherUniversal.Services
 
         public bool RestoreOriginalMods(string activeModsDir)
         {
-            string stashDir = GetStashPath();
-            if (!Directory.Exists(stashDir)) return false;
+            string allModsDir = GetAllModsPath();
+            if (!Directory.Exists(allModsDir)) return false;
 
             if (string.IsNullOrWhiteSpace(activeModsDir)) return false;
             Directory.CreateDirectory(activeModsDir);
 
             ClearDirectory(activeModsDir);
 
-            CopyDirectory(stashDir, activeModsDir);
-
-            try
-            {
-                Directory.Delete(stashDir, true);
-            }
-            catch { }
+            CopyDirectory(allModsDir, activeModsDir);
 
             return true;
         }

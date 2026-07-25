@@ -29,6 +29,18 @@ namespace ModTogetherUniversal.Services
         public ConcurrentBag<string> KickedUsers { get; } = new();
         public ConcurrentDictionary<string, bool> BannedUsers { get; } = new();
         public ConcurrentDictionary<string, string> DeletedMods { get; } = new();
+        public List<string> ChatHistory { get; } = new();
+
+        public void BroadcastChat(string username, string message)
+        {
+            string formattedMsg = $"💬 [{username}]: {message}";
+            lock (ChatHistory)
+            {
+                ChatHistory.Add(formattedMsg);
+                if (ChatHistory.Count > 100) ChatHistory.RemoveAt(0);
+            }
+            OnLog?.Invoke(formattedMsg);
+        }
 
         public event Action<string>? OnLog;
         public event Action? OnCacheRefreshRequested;
@@ -55,6 +67,7 @@ namespace ModTogetherUniversal.Services
             ActiveUsers.Clear();
             KickedUsers.Clear();
             BannedUsers.Clear();
+            lock (ChatHistory) { ChatHistory.Clear(); }
 
             var builder = WebApplication.CreateBuilder();
             builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
@@ -130,6 +143,17 @@ namespace ModTogetherUniversal.Services
                 return Results.Json(new { status = "ok" });
             });
 
+            _app.MapPost("/chat", (HttpRequest request) =>
+            {
+                string username = request.Form["username"].ToString() ?? "Unknown";
+                string message = request.Form["message"].ToString() ?? "";
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    BroadcastChat(username, message);
+                }
+                return Results.Json(new { status = "ok" });
+            });
+
             _app.MapGet("/mods", () =>
             {
                 var mods = new Dictionary<string, long>();
@@ -162,7 +186,8 @@ namespace ModTogetherUniversal.Services
                 { 
                     mods, 
                     deleted_mods = DeletedMods.ToDictionary(kvp => kvp.Key, kvp => kvp.Value), 
-                    active_users = activeUsersList 
+                    active_users = activeUsersList,
+                    chat_messages = ChatHistory.ToList()
                 });
             });
 
@@ -233,6 +258,29 @@ namespace ModTogetherUniversal.Services
             });
 
             _cts = new CancellationTokenSource();
+            
+            _ = Task.Run(async () =>
+            {
+                while (!_cts.Token.IsCancellationRequested)
+                {
+                    try
+                    {
+                        var now = DateTime.UtcNow;
+                        var toRemove = ActiveUsers.Where(kvp => (now - kvp.Value.LastSeen).TotalSeconds > 10).Select(kvp => kvp.Key).ToList();
+                        foreach (var user in toRemove)
+                        {
+                            if (ActiveUsers.TryRemove(user, out _))
+                            {
+                                OnLog?.Invoke($"🔌 User disconnected (Timeout/Force Exit): {user}");
+                                RecycleManager.Instance.HandleUserDisconnect(user, HostDir);
+                            }
+                        }
+                    }
+                    catch { }
+                    await Task.Delay(3000, _cts.Token);
+                }
+            }, _cts.Token);
+
             await _app.StartAsync(_cts.Token);
             OnLog?.Invoke($"Host Server started on port {port}");
         }

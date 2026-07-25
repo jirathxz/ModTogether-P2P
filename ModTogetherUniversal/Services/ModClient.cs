@@ -15,6 +15,7 @@ namespace ModTogetherUniversal.Services
         private int _port = 52100;
         private string _roomToken = "";
         private string _username = "";
+        private int _lastChatIndex = 0;
 
         public event Action<string>? OnLog;
         public event Action<int>? OnDownloadProgress;
@@ -34,6 +35,7 @@ namespace ModTogetherUniversal.Services
             _port = port;
             _roomToken = roomToken;
             _username = username;
+            _lastChatIndex = 0;
             
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Add("x-room-token", _roomToken);
@@ -113,8 +115,18 @@ namespace ModTogetherUniversal.Services
                     {
                         OnUsersUpdate?.Invoke(serverData.active_users);
 
+                        if (serverData.chat_messages != null && serverData.chat_messages.Count > _lastChatIndex)
+                        {
+                            for (int i = _lastChatIndex; i < serverData.chat_messages.Count; i++)
+                            {
+                                OnLog?.Invoke(serverData.chat_messages[i]);
+                            }
+                            _lastChatIndex = serverData.chat_messages.Count;
+                        }
+
                         var localMods = new HashSet<string>(Directory.GetFiles(cacheDir, "*.*", SearchOption.AllDirectories)
-                            .Select(f => Path.GetRelativePath(cacheDir, f).Replace("\\", "/"))!);
+                            .Select(f => Path.GetRelativePath(cacheDir, f).Replace("\\", "/"))
+                            .Where(f => !f.StartsWith(".recycle_mods/"))!);
 
                         var recycleDir = Path.Combine(cacheDir, ".recycle_mods");
 
@@ -127,11 +139,9 @@ namespace ModTogetherUniversal.Services
                             var relPath = kvp.Key;
                             var serverSize = kvp.Value;
                             var fullPath = Path.Combine(cacheDir, relPath);
-                            var recyclePath = Path.Combine(recycleDir, relPath);
-                            var isRecycled = File.Exists(recyclePath);
                             var localSize = File.Exists(fullPath) ? new FileInfo(fullPath).Length : -1L;
                             
-                            bool needsDownload = (!localMods.Contains(relPath) || (serverSize != -1 && localSize != serverSize)) && !isRecycled;
+                            bool needsDownload = !localMods.Contains(relPath) || (serverSize != -1 && localSize != serverSize);
                             if (needsDownload)
                             {
                                 modsToDownload.Add(relPath);
@@ -195,32 +205,9 @@ namespace ModTogetherUniversal.Services
                             var relPath = kvp.Key;
                             var serverSize = kvp.Value;
                             var fullPath = Path.Combine(cacheDir, relPath);
-                            var recyclePath = Path.Combine(recycleDir, relPath);
-                            
-                            var isRecycled = File.Exists(recyclePath);
                             var localSize = File.Exists(fullPath) ? new FileInfo(fullPath).Length : -1L;
 
-                            // Smart Restore
-                            if (isRecycled && (!localMods.Contains(relPath) || (serverSize != -1 && localSize != serverSize)))
-                            {
-                                try
-                                {
-                                    File.Move(recyclePath, fullPath, true);
-                                    OnLog?.Invoke($"♻️ Smart Restore: Restored from recycle bin: {relPath}");
-                                    isRecycled = false;
-                                    localMods.Add(relPath);
-                                    localSize = new FileInfo(fullPath).Length;
-                                }
-                                catch { }
-                            }
-
-                            if (isRecycled && !skippedRecycled.Contains(relPath))
-                            {
-                                OnLog?.Invoke($"⚠️ Skipped sync for {relPath} (exists in local recycle bin)");
-                                skippedRecycled.Add(relPath);
-                            }
-
-                            bool needsDownload = (!localMods.Contains(relPath) || (serverSize != -1 && localSize != serverSize)) && !isRecycled;
+                            bool needsDownload = !localMods.Contains(relPath) || (serverSize != -1 && localSize != serverSize);
 
                             if (needsDownload)
                             {
@@ -257,6 +244,27 @@ namespace ModTogetherUniversal.Services
             {
                 OnLog?.Invoke($"[Error fetching mods] {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task SendChatAsync(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message)) return;
+            try
+            {
+                using var client = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
+                client.DefaultRequestHeaders.Add("x-app-type", "MHW_SPECIAL");
+                client.DefaultRequestHeaders.Add("x-room-token", _roomToken);
+                var content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("username", _username),
+                    new KeyValuePair<string, string>("message", message)
+                });
+                await client.PostAsync($"http://{_hostIp}:{_port}/chat", content);
+            }
+            catch (Exception ex)
+            {
+                OnLog?.Invoke($"⚠️ Chat Error: {ex.Message}");
             }
         }
 
@@ -370,6 +378,7 @@ namespace ModTogetherUniversal.Services
         public Dictionary<string, long> mods { get; set; } = new();
         public Dictionary<string, string> deleted_mods { get; set; } = new();
         public List<UserSyncState> active_users { get; set; } = new();
+        public List<string> chat_messages { get; set; } = new();
     }
 
     public class UserSyncState

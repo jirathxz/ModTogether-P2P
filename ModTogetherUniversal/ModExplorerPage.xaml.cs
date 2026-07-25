@@ -75,6 +75,40 @@ namespace ModTogetherUniversal
 
         private System.IO.FileSystemWatcher? _watcher;
 
+        private void SetupWatcher()
+        {
+            if (_watcher != null)
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Dispose();
+                _watcher = null;
+            }
+
+            if (!string.IsNullOrWhiteSpace(ModsDirectory) && Directory.Exists(ModsDirectory))
+            {
+                _watcher = new System.IO.FileSystemWatcher(ModsDirectory)
+                {
+                    NotifyFilter = System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.LastWrite,
+                    IncludeSubdirectories = false,
+                    EnableRaisingEvents = true
+                };
+
+                System.IO.FileSystemEventHandler handler = (s, e) =>
+                {
+                    Application.Current.Dispatcher.InvokeAsync(() => RefreshModsList());
+                };
+                System.IO.RenamedEventHandler renamedHandler = (s, e) =>
+                {
+                    Application.Current.Dispatcher.InvokeAsync(() => RefreshModsList());
+                };
+
+                _watcher.Created += handler;
+                _watcher.Deleted += handler;
+                _watcher.Changed += handler;
+                _watcher.Renamed += renamedHandler;
+            }
+        }
+
         public ModExplorerPage()
         {
             InitializeComponent();
@@ -87,29 +121,7 @@ namespace ModTogetherUniversal
                 if (!string.IsNullOrWhiteSpace(ModsDirectory) && !Directory.Exists(ModsDirectory))
                     try { Directory.CreateDirectory(ModsDirectory); } catch { }
                 
-                if (_watcher == null && Directory.Exists(ModsDirectory))
-                {
-                    _watcher = new System.IO.FileSystemWatcher(ModsDirectory)
-                    {
-                        NotifyFilter = System.IO.NotifyFilters.FileName | System.IO.NotifyFilters.LastWrite,
-                        IncludeSubdirectories = false,
-                        EnableRaisingEvents = true
-                    };
-                    
-                    System.IO.FileSystemEventHandler handler = (s, e) => 
-                    {
-                        Application.Current.Dispatcher.InvokeAsync(() => RefreshModsList());
-                    };
-                    System.IO.RenamedEventHandler renamedHandler = (s, e) =>
-                    {
-                        Application.Current.Dispatcher.InvokeAsync(() => RefreshModsList());
-                    };
-
-                    _watcher.Created += handler;
-                    _watcher.Deleted += handler;
-                    _watcher.Changed += handler;
-                    _watcher.Renamed += renamedHandler;
-                }
+                SetupWatcher();
                 
                 CheckPluginStatus();
                 RefreshModsList();
@@ -119,6 +131,7 @@ namespace ModTogetherUniversal
             {
                 ApplyTranslations();
                 CheckPluginStatus();
+                SetupWatcher();
                 RefreshModsList();
             };
         }
@@ -157,7 +170,8 @@ namespace ModTogetherUniversal
 
         private void CheckPluginStatus()
         {
-            var activePlugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
+            string gameDir = App.Settings.Current.GameDirectory;
+            var activePlugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault(p => PluginManager.Instance.IsPluginForGame(p, gameDir));
             if (activePlugin != null)
             {
                 IsInstallAllowed = false;
@@ -225,7 +239,7 @@ namespace ModTogetherUniversal
         {
             if (!IsInstallAllowed)
             {
-                var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
+                var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault(p => PluginManager.Instance.IsPluginForGame(p, App.Settings.Current.GameDirectory));
                 string pName = plugin?.Name ?? "Plugin";
                 MessageBox.Show($"Mod installation for this game is managed by the '{pName}' plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
@@ -359,7 +373,7 @@ namespace ModTogetherUniversal
         {
             if (!IsInstallAllowed)
             {
-                var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault();
+                var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault(p => PluginManager.Instance.IsPluginForGame(p, App.Settings.Current.GameDirectory));
                 string pName = plugin?.Name ?? "Plugin";
                 MessageBox.Show($"Mod installation for this game is managed by the '{pName}' plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
                 if (sender is CheckBox targetChk) targetChk.IsChecked = false;
@@ -776,17 +790,23 @@ namespace ModTogetherUniversal
             SessionManager.Instance.State.SelectedExplorerPreset = presetName;
             SessionManager.Instance.Save();
 
+            string oldPreset = e.RemovedItems.Count > 0 ? e.RemovedItems[0] as string ?? "" : "";
+            if (oldPreset == AllModsPreset || oldPreset.Contains("Default") || oldPreset.Contains("Off"))
+            {
+                ModpackManager.Instance.SaveOriginalMods(ModsDirectory);
+            }
+
             if (presetName == AllModsPreset || presetName.Contains("Default") || presetName.Contains("Off"))
             {
                 bool restored = ModpackManager.Instance.RestoreOriginalMods(ModsDirectory);
-                TxtStatus.Text = restored ? "✅ Restored original mods from .stash." : "Activated Default Mods.";
+                TxtStatus.Text = restored ? "✅ Restored original mods from AllMods." : "Activated Default Mods.";
             }
             else
             {
                 bool loaded = ModpackManager.Instance.LoadPreset(presetName, ModsDirectory);
                 if (loaded)
                 {
-                    TxtStatus.Text = $"✅ Loaded Preset '{presetName}' (Original mods stashed in .stash)";
+                    TxtStatus.Text = $"✅ Loaded Preset '{presetName}' (Original mods safely stored in AllMods)";
                 }
             }
 

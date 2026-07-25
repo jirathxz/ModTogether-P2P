@@ -60,6 +60,11 @@ namespace ModTogetherUniversal
             Services.BandwidthTracker.Start();
             
             App.Updater.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
+            if (App.Client != null)
+            {
+                App.Client.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
+            }
+            
             App.Updater.OnUpdateAvailable += (version, assets) => 
             {
                 Dispatcher.Invoke(() => 
@@ -188,6 +193,44 @@ namespace ModTogetherUniversal
             
             UserList.Visibility = Visibility.Collapsed;
             LblUsers.Text = Models.I18N.GetString("lbl_users", App.Settings.Current.Language);
+        }
+
+        private async void BtnSendChat_Click(object sender, RoutedEventArgs e)
+        {
+            await SendChat();
+        }
+
+        private async void TxtChatInput_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                await SendChat();
+            }
+        }
+
+        private async System.Threading.Tasks.Task SendChat()
+        {
+            string msg = TxtChatInput.Text.Trim();
+            if (string.IsNullOrEmpty(msg)) return;
+
+            string username = Environment.UserName;
+            
+            if (App.Server != null && App.Server.IsRunning)
+            {
+                username = App.Server.HostUsername;
+                App.Server.BroadcastChat(username, msg);
+            }
+            else if (App.Client != null && App.Client.IsConnected)
+            {
+                await App.Client.SendChatAsync(msg);
+            }
+            else
+            {
+                Log("⚠️ You must be in a session to send a message.");
+                return;
+            }
+
+            TxtChatInput.Text = "";
         }
 
         private async void BtnUpdateStandalone_Click(object sender, RoutedEventArgs e)
@@ -341,9 +384,10 @@ namespace ModTogetherUniversal
                     RootNavigation.MenuItems.Add(header);
                 }
 
-                // Add a nav item for every loaded plugin (no game-path filter)
                 foreach (var ext in Services.PluginManager.Instance.LoadedPlugins)
                 {
+                    bool isMatch = Services.PluginManager.Instance.IsPluginForGame(ext, gameDir);
+
                     // Initialize with current game dir (empty string if not set)
                     ext.Initialize(gameDir);
 
@@ -367,9 +411,14 @@ namespace ModTogetherUniversal
                     // Store the page instance in the dictionary so we can retrieve it on click
                     _pluginPages[navItem] = pageInstance;
 
-                    navItem.IsEnabled = true;
-                    RootNavigation.MenuItems.Add(navItem);
+                    if (isMatch)
+                    {
+                        navItem.IsEnabled = true;
+                        RootNavigation.MenuItems.Add(navItem);
+                    }
                 }
+                
+
                 Log($"âœ… Loaded {Services.PluginManager.Instance.LoadedPlugins.Count} plugin(s).");
             });
         }
