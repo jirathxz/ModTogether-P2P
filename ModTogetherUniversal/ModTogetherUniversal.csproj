@@ -7,25 +7,28 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>..\logo\mhw-512.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
     <NoWarn>$(NoWarn);NU1902</NoWarn>
 
-    <!-- Anti-Virus / VirusTotal & PE Metadata Optimization -->
-    <DebugType>embedded</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
-    <EventSourceSupport>false</EventSourceSupport>
-    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <!-- Build Reproducibility -->
+    <Deterministic>true</Deterministic>
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
 
-    <!-- PE Assembly Version Information (Fixes SecureAge AI Heuristics) -->
+    <!-- PE Assembly Metadata -->
     <Title>ModTogether Universal</Title>
     <Product>ModTogether Universal</Product>
-    <Description>Real-time Peer-to-Peer Mod Synchronization &amp; Management Suite for PC Games</Description>
-    <Company>jirathx</Company>
-    <Copyright>Copyright © 2026 jirathx. Released under MIT License.</Copyright>
-    <Version>1.2.0</Version>
+    <Description>Real-time Peer-to-Peer Mod Synchronization Suite for PC Gaming</Description>
+    <Company>ModTogether Community</Company>
+    <Copyright>Copyright © 2026 ModTogether. Open Source Software under MIT License.</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Version>1.2.0.0</Version>
     <AssemblyVersion>1.2.0.0</AssemblyVersion>
     <FileVersion>1.2.0.0</FileVersion>
+    <InformationalVersion>1.2.0.0</InformationalVersion>
+    <RepositoryUrl>https://github.com/jirathxz/ModTogether-P2P</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/jirathxz/ModTogether-P2P</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -44,7 +47,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ModTogether.API\ModTogether.API.csproj" />
-    <ProjectReference Include="..\ModTogether.Plugins.MHW\ModTogether.Plugins.MHW.csproj" />
   </ItemGroup>
 
 </Project>

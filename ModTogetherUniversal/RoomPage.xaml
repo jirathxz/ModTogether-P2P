@@ -3,145 +3,234 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       Title="RoomPage">
+    
     <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="True" Background="Transparent">
-            <Grid Margin="20" MinWidth="0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+        <!-- SCROLL VIEWER FOR IDLE STATE -->
+        <ScrollViewer x:Name="ViewIdle" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="True" Background="Transparent" Visibility="Visible">
+            <Grid Margin="24" MinWidth="0" MaxWidth="1000" HorizontalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,16">
-                    <TextBlock Text="Play together, without the setup hassle" FontSize="26" FontWeight="SemiBold" />
-                    <TextBlock Text="Create a room to share your modpack, or join a friend with their room address and PIN." Margin="0,4,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                <!-- Hero Header -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,32" HorizontalAlignment="Center">
+                    <TextBlock Text="Play Together, Without the Setup Hassle" FontSize="32" FontWeight="Bold" TextAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <TextBlock Text="Create a lobby to sync your modpack, or join a friend using their IP and PIN." FontSize="16" Margin="0,8,0,0" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextAlignment="Center" />
                 </StackPanel>
 
-                <!-- Left Column: Create Session (Host) -->
-                <ui:Card Grid.Row="1" Grid.Column="0" Padding="20" VerticalAlignment="Top">
-                    <StackPanel>
-                        <TextBlock x:Name="TxtHostTitle" Text="Create Session (Host)" FontSize="20" FontWeight="SemiBold" />
-                        <TextBlock Text="Share your installed mods with friends. They only need the address and PIN shown after you start." Margin="0,4,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        
-                        <Grid Margin="0,0,0,12">
-                            <TextBlock Text="PIN will appear after hosting" Foreground="#A0A0A0" VerticalAlignment="Center" x:Name="LblHostPin" />
-                            <WrapPanel HorizontalAlignment="Right">
-                                <ComboBox x:Name="CmbIp" Width="140" Margin="0,0,6,0" Visibility="Collapsed" />
-                                <ui:Button Content="IP" Icon="{ui:SymbolIcon Copy24}" Margin="0,0,6,0" x:Name="BtnCopyIp" Click="BtnCopyIp_Click" Visibility="Collapsed" ToolTip="Copy IP" />
-                                <ui:Button Content="PIN" Icon="{ui:SymbolIcon Copy24}" x:Name="BtnCopyPin" Click="BtnCopyPin_Click" Visibility="Collapsed" ToolTip="Copy PIN" />
-                            </WrapPanel>
-                        </Grid>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="24" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                        <Expander Header="Advanced room settings" Margin="0,0,0,16">
-                            <StackPanel Margin="0,12,0,0">
-                                <ui:ToggleSwitch Content="Use a custom PIN" x:Name="ToggleCustomPin" Checked="ToggleCustomPin_Changed" Unchecked="ToggleCustomPin_Changed" Margin="0,0,0,4"/>
-                                <ui:TextBox PlaceholderText="Six-character PIN" MaxLength="6" IsEnabled="False" x:Name="TxtCustomPin" Margin="0,0,0,12" />
-                                <ui:ToggleSwitch Content="Use a custom port" x:Name="ToggleCustomPort" Checked="ToggleCustomPort_Changed" Unchecked="ToggleCustomPort_Changed" Margin="0,0,0,4"/>
-                                <ui:TextBox PlaceholderText="Port (default: 52100)" IsEnabled="False" x:Name="TxtCustomPort" Margin="0,0,0,12" />
-                                <ui:ToggleSwitch Content="Automatically configure router (UPnP)" x:Name="ToggleUpnp" />
+                    <!-- Host Card -->
+                    <ui:Card Grid.Column="0" Padding="32" VerticalAlignment="Top" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <ui:SymbolIcon Symbol="Server24" FontSize="28" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,12,0" />
+                                <TextBlock Text="Host a Room" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
                             </StackPanel>
-                        </Expander>
-                        
-                        <ui:Button Content="Start Hosting" Icon="{ui:SymbolIcon Play24}" Appearance="Primary" HorizontalAlignment="Stretch" x:Name="BtnHost" Click="BtnHost_Click" Margin="0,0,0,16" />
-                        
-                        <Grid>
-                            <TextBlock Text="Ready to create a room" VerticalAlignment="Center" x:Name="LblHostStatus" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <ui:Button Content="Close duplicate hosts" Icon="{ui:SymbolIcon Dismiss24}" HorizontalAlignment="Right" x:Name="BtnKillHost" Click="BtnKillHost_Click" ToolTip="Only closes other ModTogether windows" />
-                        </Grid>
-                    </StackPanel>
-                </ui:Card>
-
-                <!-- Right Column: Join Session (Client) -->
-                <ui:Card Grid.Row="1" Grid.Column="2" Padding="20" VerticalAlignment="Top">
-                    <StackPanel>
-                        <TextBlock x:Name="TxtClientTitle" Text="Join Session (Client)" FontSize="20" FontWeight="SemiBold" />
-                        <TextBlock Text="Paste the room address your host shared, then enter the six-character PIN." Margin="0,4,0,16" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ui:TextBox PlaceholderText="Host IP (e.g. 192.168.1.5:52100)" x:Name="TxtIp" Grid.Column="0" Margin="0,0,8,0" />
-                            <ui:Button Content="Scan LAN" Icon="{ui:SymbolIcon Search24}" x:Name="BtnScan" Grid.Column="1" Click="BtnScan_Click" />
-                        </Grid>
-
-                        <ui:TextBox PlaceholderText="Six-character PIN" MaxLength="6" x:Name="TxtPin" Margin="0,0,0,16" />
-                        
-                        <ui:Button Content="Join" Icon="{ui:SymbolIcon Link24}" Appearance="Primary" HorizontalAlignment="Stretch" x:Name="BtnJoin" Click="BtnJoin_Click" />
-                    </StackPanel>
-                </ui:Card>
-
-                <!-- Session Members & Health Dashboard Card -->
-                <ui:Card Grid.Row="2" Grid.ColumnSpan="3" Margin="0,16,0,0" Padding="16">
-                    <StackPanel>
-                        <StackPanel Margin="0,0,0,12">
-                            <TextBlock Text="Session activity" FontSize="16" FontWeight="SemiBold" />
-                            <TextBlock x:Name="LblSessionSummary" Text="No active session" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            
+                            <TextBlock Text="Share your installed mods instantly. Friends only need the PIN shown after you start hosting." Margin="0,0,0,24" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" LineHeight="20" />
+                            
+                            <Expander Header="Advanced Settings" Margin="0,0,0,24">
+                                <StackPanel Margin="0,12,0,0">
+                                    <ui:ToggleSwitch Content="Use a custom PIN" x:Name="ToggleCustomPin" Checked="ToggleCustomPin_Changed" Unchecked="ToggleCustomPin_Changed" Margin="0,0,0,8"/>
+                                    <ui:TextBox PlaceholderText="Six-character PIN" MaxLength="6" IsEnabled="False" x:Name="TxtCustomPin" FontFamily="Consolas" FontSize="16" Margin="0,0,0,16" />
+                                    <ui:ToggleSwitch Content="Use a custom port" x:Name="ToggleCustomPort" Checked="ToggleCustomPort_Changed" Unchecked="ToggleCustomPort_Changed" Margin="0,0,0,8"/>
+                                    <ui:TextBox PlaceholderText="Port (default: 52100)" IsEnabled="False" x:Name="TxtCustomPort" FontFamily="Consolas" FontSize="16" Margin="0,0,0,16" />
+                                    <ui:ToggleSwitch Content="Automatically configure router (UPnP)" x:Name="ToggleUpnp" />
+                                </StackPanel>
+                            </Expander>
+                            
+                            <ui:Button Content="Start Hosting" Icon="{ui:SymbolIcon Play24}" Appearance="Primary" HorizontalAlignment="Stretch" Height="48" FontSize="16" x:Name="BtnHost" Click="BtnHost_Click" Margin="0,0,0,16" />
+                            
+                            <Grid>
+                                <TextBlock Text="Ready to create a room" VerticalAlignment="Center" x:Name="LblHostStatus" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <ui:Button Content="Close duplicates" Icon="{ui:SymbolIcon Dismiss24}" Appearance="Transparent" HorizontalAlignment="Right" x:Name="BtnKillHost" Click="BtnKillHost_Click" ToolTip="Only closes other ModTogether windows" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                            </Grid>
                         </StackPanel>
-                        <TextBlock x:Name="TxtSessionEmpty" Text="Start a room or join one to see connected members and sync progress here." TextAlignment="Center" TextWrapping="Wrap" Margin="16,0,16,12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock x:Name="LblSessionMembers" Text="👥 Session Members &amp; Live Health" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,12" />
-                        <ListBox x:Name="ListSessionMembers" MaxHeight="180" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    </ui:Card>
+
+                    <!-- Join Card -->
+                    <ui:Card Grid.Column="2" Padding="32" VerticalAlignment="Top" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <ui:SymbolIcon Symbol="People24" FontSize="28" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,12,0" />
+                                <TextBlock Text="Join a Room" FontSize="24" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </StackPanel>
+                            
+                            <TextBlock Text="Paste the room address your host shared, then enter the six-character PIN to connect." Margin="0,0,0,24" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" LineHeight="20" />
+                            
+                            <TextBlock Text="HOST IP ADDRESS" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,4" />
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBox PlaceholderText="e.g. 192.168.1.5:52100" x:Name="TxtIp" Grid.Column="0" FontFamily="Consolas" FontSize="16" Height="40" Margin="0,0,8,0" />
+                                <ui:Button Content="Scan LAN" Icon="{ui:SymbolIcon Search24}" x:Name="BtnScan" Grid.Column="1" Height="40" Click="BtnScan_Click" />
+                            </Grid>
+
+                            <TextBlock Text="ROOM PIN" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,4" />
+                            <ui:TextBox PlaceholderText="XXXXXX" MaxLength="6" x:Name="TxtPin" FontFamily="Consolas" FontSize="20" FontWeight="Bold" CharacterCasing="Upper" TextAlignment="Center" Height="50" Margin="0,0,0,32" />
+                            
+                            <ui:Button Content="Join Lobby" Icon="{ui:SymbolIcon Link24}" Appearance="Primary" HorizontalAlignment="Stretch" Height="48" FontSize="16" x:Name="BtnJoin" Click="BtnJoin_Click" />
+                        </StackPanel>
+                    </ui:Card>
+                </Grid>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ACTIVE LOBBY STATE -->
+        <Grid x:Name="ViewActive" Visibility="Collapsed" Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Dashboard Header -->
+            <ui:Card Grid.Row="0" Margin="0,0,0,16" Padding="24" Background="{DynamicResource SystemAccentColorDark2Brush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,24,0">
+                        <TextBlock x:Name="LblActiveRole" Text="HOSTING LOBBY" FontSize="12" FontWeight="Bold" Foreground="#A0A0A0" Margin="0,0,0,4" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Room PIN: " FontSize="20" FontWeight="SemiBold" Foreground="White" VerticalAlignment="Center" />
+                            <TextBlock x:Name="LblActivePin" Text="XXXXXX" FontSize="28" FontWeight="Bold" FontFamily="Consolas" Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ui:Button Icon="{ui:SymbolIcon Copy24}" x:Name="BtnCopyActivePin" Click="BtnCopyPin_Click" Appearance="Transparent" Foreground="White" ToolTip="Copy PIN" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="IP Address" FontSize="12" FontWeight="Bold" Foreground="#A0A0A0" Margin="0,0,0,4" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock x:Name="LblActiveIp" Text="0.0.0.0:52100" FontSize="16" FontFamily="Consolas" Foreground="White" VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <ui:Button Icon="{ui:SymbolIcon Copy24}" x:Name="BtnCopyActiveIp" Click="BtnCopyIp_Click" Appearance="Transparent" Foreground="White" ToolTip="Copy IP" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <ui:Button Grid.Column="2" Content="Leave Room" Icon="{ui:SymbolIcon DoorArrowLeft24}" Appearance="Danger" Height="40" x:Name="BtnLeaveRoom" Click="BtnLeaveRoom_Click" VerticalAlignment="Center" />
+                </Grid>
+            </ui:Card>
+
+            <!-- Members Dashboard -->
+            <ui:Card Grid.Row="1" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="20,16">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="People24" FontSize="20" Margin="0,0,12,0" />
+                            <TextBlock Text="Session Members" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <TextBlock x:Name="LblSessionSummary" Text="(0 Connected)" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <ListView x:Name="ListSessionMembers" Grid.Row="1" Margin="8,8,8,8" Background="Transparent" BorderThickness="0"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListViewItem}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0,2" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6">
+                                                <ContentPresenter Margin="8,4" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="4,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Avatar -->
+                                    <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="{Binding AvatarColor}" Margin="0,0,16,0">
+                                        <TextBlock Text="{Binding Initials}" Foreground="White" FontWeight="Bold" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+
+                                    <!-- User Info -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="150">
+                                        <TextBlock Text="{Binding Username}" FontWeight="SemiBold" FontSize="15" />
+                                        <TextBlock Text="{Binding CurrentActivity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+
+                                    <!-- Ping Indicator -->
+                                    <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,24,0">
+                                        <Ellipse Width="8" Height="8" Fill="{Binding PingColor}" Margin="0,0,6,0" />
+                                        <TextBlock Text="{Binding PingMs, StringFormat='{}{0} ms'}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" />
+                                    </StackPanel>
+
+                                    <!-- Actions (Host Only) -->
+                                    <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center" Visibility="{Binding ManagementVisibility}">
+                                        <ui:Button Content="Kick" Tag="{Binding Username}" Click="BtnKickUser_Click" Appearance="Secondary" Margin="0,0,8,0" />
+                                        <ui:Button Content="Ban" Tag="{Binding Username}" Click="BtnBanUser_Click" Appearance="Danger" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- Banned Users Panel -->
+                    <Expander Grid.Row="2" Header="Banned Members" x:Name="PanelBannedUsers" Visibility="Collapsed" Margin="20,0,20,16">
+                        <ListBox x:Name="ListBannedUsers" MaxHeight="100" Background="Transparent" BorderThickness="0">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Grid Margin="6,4">
+                                    <Grid Margin="0,4">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="160" />
-                                            <ColumnDefinition Width="90" />
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-
-                                        <TextBlock Text="{Binding Username}" Grid.Column="0" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                                        <TextBlock Text="{Binding PingMs, StringFormat='{}Ping: {0} ms'}" Grid.Column="1" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" FontSize="12" />
-                                        <TextBlock Text="{Binding CurrentActivity}" Grid.Column="2" Foreground="{DynamicResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" FontSize="12" TextTrimming="CharacterEllipsis" />
-
-                                        <StackPanel Orientation="Horizontal" Grid.Column="3" HorizontalAlignment="Right" Visibility="{Binding ManagementVisibility}">
-                                            <ui:Button Content="Kick" Tag="{Binding Username}" Click="BtnKickUser_Click" Margin="0,0,4,0" Padding="8,2" FontSize="11" ToolTip="Remove this member from the current session" />
-                                            <ui:Button Content="Ban" Tag="{Binding Username}" Click="BtnBanUser_Click" Appearance="Danger" Padding="8,2" FontSize="11" ToolTip="Block this member until the host stops" />
-                                        </StackPanel>
+                                        <TextBlock Text="{Binding}" Grid.Column="0" FontWeight="Medium" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        <ui:Button Content="Unban" Tag="{Binding}" Click="BtnUnbanUser_Click" Grid.Column="1" Appearance="Secondary" Padding="12,4" />
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-
-                        <!-- Banned Users List -->
-                        <StackPanel x:Name="PanelBannedUsers" Visibility="Collapsed" Margin="0,12,0,0">
-                            <TextBlock Text="⛔ Banned Members" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <ListBox x:Name="ListBannedUsers" MaxHeight="100" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="6,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding}" Grid.Column="0" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                            <ui:Button Content="Unban" Tag="{Binding}" Click="BtnUnbanUser_Click" Grid.Column="1" Appearance="Secondary" Padding="10,3" FontSize="11" ToolTip="Remove ban and allow user to reconnect" />
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </StackPanel>
-                    </StackPanel>
-                </ui:Card>
-            </Grid>
-        </ScrollViewer>
+                    </Expander>
+                </Grid>
+            </ui:Card>
+        </Grid>
 
         <!-- LAN Scan Result Overlay -->
-        <Grid x:Name="ScanOverlay" Visibility="Collapsed" Background="#80000000">
-            <ui:Card VerticalAlignment="Center" HorizontalAlignment="Center" Padding="20" MinWidth="300">
+        <Grid x:Name="ScanOverlay" Visibility="Collapsed" Background="#C0000000">
+            <ui:Card VerticalAlignment="Center" HorizontalAlignment="Center" Padding="24" MinWidth="350">
                 <StackPanel>
-                    <TextBlock Text="Select Host" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12" />
-                    <ListBox x:Name="ListServers" MaxHeight="200" Margin="0,0,0,16" />
+                    <TextBlock Text="Select Host from LAN" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,16" />
+                    <ListBox x:Name="ListServers" MaxHeight="250" Margin="0,0,0,24" />
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <ui:Button Content="Cancel" Click="BtnCancelScan_Click" Margin="0,0,8,0" />
-                        <ui:Button Content="Select" Appearance="Primary" Click="BtnSelectScan_Click" />
+                        <ui:Button Content="Cancel" Click="BtnCancelScan_Click" Appearance="Secondary" Margin="0,0,8,0" />
+                        <ui:Button Content="Select Host" Appearance="Primary" Click="BtnSelectScan_Click" />
                     </StackPanel>
                 </StackPanel>
             </ui:Card>

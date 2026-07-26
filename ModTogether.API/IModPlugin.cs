@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 
 namespace ModTogether.API
 {
@@ -14,6 +14,7 @@ namespace ModTogether.API
         void Initialize(string gameDirectory);
         void SetLanguage(string language);
         Page CreatePage();
+        bool IsValidGameDirectory(string gameDirectory);
     }
 }
 

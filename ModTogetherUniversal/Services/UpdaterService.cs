@@ -92,59 +92,51 @@ namespace ModTogetherUniversal.Services
         {
             try
             {
-                var newFilePath = "new_" + assetName;
+                // Download to a temporary staging path
+                string stagingPath = Path.Combine(Path.GetTempPath(), "ModTogether_Update_" + assetName);
                 using var client = new HttpClient();
+                client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("ModTogetherUniversal", CurrentVersion));
                 using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
                 response.EnsureSuccessStatusCode();
 
                 var totalBytes = response.Content.Headers.ContentLength ?? -1L;
                 var canReportProgress = totalBytes != -1;
 
-                using var contentStream = await response.Content.ReadAsStreamAsync();
-                using var fileStream = new FileStream(newFilePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
-
-                var totalRead = 0L;
-                var buffer = new byte[8192];
-                var isMoreToRead = true;
-
-                do
+                using (var contentStream = await response.Content.ReadAsStreamAsync())
+                using (var fileStream = new FileStream(stagingPath, FileMode.Create, FileAccess.Write, FileShare.None, 65536, true))
                 {
-                    var read = await contentStream.ReadAsync(buffer, 0, buffer.Length);
-                    if (read == 0)
-                    {
-                        isMoreToRead = false;
-                    }
-                    else
+                    var totalRead = 0L;
+                    var buffer = new byte[65536];
+                    int read;
+                    while ((read = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
                     {
                         await fileStream.WriteAsync(buffer, 0, read);
                         totalRead += read;
-
                         if (canReportProgress)
                         {
                             progressCallback((int)((totalRead * 100) / totalBytes));
                         }
                     }
                 }
-                while (isMoreToRead);
-                
-                // Write updater.bat
-                string currentExeName = Path.GetFileName(Process.GetCurrentProcess().MainModule?.FileName ?? "ModTogetherUniversal.exe");
-                string batPath = "updater.bat";
-                var batLines = new[]
+
+                // Replace current executable in-place
+                string currentExePath = Process.GetCurrentProcess().MainModule?.FileName
+                    ?? Path.Combine(AppContext.BaseDirectory, "ModTogetherUniversal.exe");
+                string backupPath = currentExePath + ".old";
+
+                // Rename current -> .old, then copy staged -> current
+                if (File.Exists(backupPath)) File.Delete(backupPath);
+                File.Move(currentExePath, backupPath);
+                File.Move(stagingPath, currentExePath);
+
+                OnLog?.Invoke("✅ Update downloaded. Restarting application...");
+
+                // Relaunch the updated executable
+                Process.Start(new ProcessStartInfo
                 {
-                    "@echo off",
-                    "echo Updating ModTogether... Please wait.",
-                    "timeout /t 2 /nobreak > NUL",
-                    $"del /f /q \"{currentExeName}\"",
-                    $"ren \"{newFilePath}\" \"{assetName}\"",
-                    $"start \"\" \"{assetName}\"",
-                    "del \"%~f0\""
-                };
-                
-                await File.WriteAllLinesAsync(batPath, batLines);
-                
-                // Start bat and exit
-                Process.Start(new ProcessStartInfo { FileName = batPath, UseShellExecute = true, CreateNoWindow = false });
+                    FileName = currentExePath,
+                    UseShellExecute = true
+                });
                 Environment.Exit(0);
             }
             catch (Exception ex)

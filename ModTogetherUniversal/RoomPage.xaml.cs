@@ -17,7 +17,6 @@ namespace ModTogetherUniversal
         public RoomPage()
         {
             InitializeComponent();
-            LoadIps();
             ApplyTranslations();
 
             Loaded += (_, _) => 
@@ -31,24 +30,15 @@ namespace ModTogetherUniversal
                 if (App.Server != null && App.Server.IsRunning)
                 {
                     _isHosting = true;
-                    BtnHost.Content = I18N.GetString("btn_stop_host", App.Settings.Current.Language);
-                    BtnHost.Appearance = Wpf.Ui.Controls.ControlAppearance.Danger;
-                    if (LblHostStatus != null)
-                    {
-                        LblHostStatus.Text = "Status: Hosting";
-                        LblHostStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
-                    }
-                    CmbIp.Visibility = Visibility.Visible;
-                    BtnCopyIp.Visibility = Visibility.Visible;
-                    BtnCopyPin.Visibility = Visibility.Visible;
-                    LblHostPin.Text = $"PIN: {App.Server.RoomToken}";
-                    LblHostPin.Foreground = System.Windows.Media.Brushes.LightGreen;
+                    ShowActiveState("HOSTING LOBBY", App.Server.RoomToken, "0.0.0.0:" + App.Server.Port);
                 }
-
-                if (App.Client != null && App.Client.IsConnected)
+                else if (App.Client != null && App.Client.IsConnected)
                 {
-                    BtnJoin.Content = "Disconnect";
-                    BtnJoin.Appearance = Wpf.Ui.Controls.ControlAppearance.Danger;
+                    ShowActiveState("CONNECTED TO LOBBY", App.Client.Token, App.Client.ServerIp + ":" + App.Client.ServerPort);
+                }
+                else
+                {
+                    ShowIdleState();
                 }
 
                 StartStatusMonitor();
@@ -60,6 +50,22 @@ namespace ModTogetherUniversal
                 Dispatcher.Invoke(ApplyTranslations);
             };
 
+        }
+
+        private void ShowIdleState()
+        {
+            if (ViewIdle != null) ViewIdle.Visibility = Visibility.Visible;
+            if (ViewActive != null) ViewActive.Visibility = Visibility.Collapsed;
+        }
+
+        private void ShowActiveState(string role, string pin, string ip)
+        {
+            if (ViewIdle != null) ViewIdle.Visibility = Visibility.Collapsed;
+            if (ViewActive != null) ViewActive.Visibility = Visibility.Visible;
+            
+            if (LblActiveRole != null) LblActiveRole.Text = role;
+            if (LblActivePin != null) LblActivePin.Text = pin;
+            if (LblActiveIp != null) LblActiveIp.Text = ip;
         }
 
 
@@ -130,11 +136,8 @@ namespace ModTogetherUniversal
                                     LblHostStatus.Text = "Status: Ready";
                                     LblHostStatus.Foreground = System.Windows.Media.Brushes.LightGreen;
                                 }
-                                 CmbIp.Visibility = Visibility.Collapsed;
-                                 BtnCopyIp.Visibility = Visibility.Collapsed;
-                                 BtnCopyPin.Visibility = Visibility.Collapsed;
-                                 LblHostPin.Text = I18N.GetString("host_pin", App.Settings.Current.Language);
-                                 LblHostPin.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(160, 160, 160));
+                                 ResetSessionDashboard();
+                                 ShowIdleState();
                                  
                                  bool isClientActive = App.Client != null && App.Client.IsConnected;
                              });
@@ -148,7 +151,7 @@ namespace ModTogetherUniversal
                         // We are hosting, update the active users UI
                         await Application.Current.Dispatcher.InvokeAsync(() =>
                         {
-                            var users = App.Server.ActiveUsers.Select(kvp => new Services.UserSyncState 
+                            var users = App.Server.ActiveUsers.Select(kvp => new UserSyncViewModel 
                             { 
                                 Username = kvp.Key, 
                                 IsSynced = kvp.Value.IsSynced, 
@@ -159,7 +162,7 @@ namespace ModTogetherUniversal
                                 PingMs = kvp.Value.PingMs
                             }).ToList();
                             
-                            users.Add(new Services.UserSyncState 
+                            users.Insert(0, new UserSyncViewModel 
                             { 
                                 Username = $"{App.Server.HostUsername} (Host)", 
                                 IsSynced = true, 
@@ -173,13 +176,8 @@ namespace ModTogetherUniversal
                                  var activePlugin = Services.PluginManager.Instance.LoadedPlugins.FirstOrDefault();
                                  string gameName = activePlugin?.TargetGame ?? "Monster Hunter: World";
                                  Services.DiscordRpcService.Instance.UpdatePresence($"Playing ModTogether | {gameName}", "Host Room", users.Count, 4, App.Server.RoomToken);
-                                 ListSessionMembers.Items.Clear();
-                                 foreach (var u in users)
-                                 {
-                                     ListSessionMembers.Items.Add(u);
-                                 }
-                                TxtSessionEmpty.Visibility = Visibility.Collapsed;
-                                LblSessionSummary.Text = $"{users.Count} member{(users.Count == 1 ? string.Empty : "s")} connected · {users.Count(u => u.IsSynced)} ready";
+                                 ListSessionMembers.ItemsSource = users;
+                                 LblSessionSummary.Text = $"({users.Count} Connected)";
                             }
 
                             if (MainWindow.Instance != null && MainWindow.Instance.UserList != null)
@@ -207,8 +205,6 @@ namespace ModTogetherUniversal
         public void ApplyTranslations()
         {
             string lang = App.Settings.Current.Language;
-            if (TxtHostTitle != null) TxtHostTitle.Text = I18N.GetString("host_title", lang);
-            if (TxtClientTitle != null) TxtClientTitle.Text = I18N.GetString("client_title", lang);
             if (BtnHost != null && !_isHosting) BtnHost.Content = I18N.GetString("btn_host", lang);
             if (BtnHost != null && _isHosting) BtnHost.Content = I18N.GetString("btn_stop_host", lang);
             if (BtnKillHost != null) BtnKillHost.Content = I18N.GetString("btn_kill_host", lang);
@@ -216,16 +212,12 @@ namespace ModTogetherUniversal
             if (BtnScan != null) BtnScan.Content = I18N.GetString("btn_scan", lang);
             if (TxtIp != null) TxtIp.PlaceholderText = I18N.GetString("client_ip", lang);
             if (TxtPin != null) TxtPin.PlaceholderText = I18N.GetString("client_pin", lang);
-            if (LblHostPin != null && !_isHosting) LblHostPin.Text = I18N.GetString("host_pin", lang);
         }
 
         #region Host Logic
 
-        private void LoadIps()
+        private string GetPrimaryLocalIp()
         {
-            CmbIp.Items.Clear();
-            CmbIp.Items.Add("127.0.0.1 (Localhost)");
-
             try
             {
                 var interfaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
@@ -239,26 +231,13 @@ namespace ModTogetherUniversal
                     {
                         if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
                         {
-                            string ipStr = addr.Address.ToString();
-                            string label = GetInterfaceLabel(ni, ipStr);
-                            CmbIp.Items.Add($"{ipStr} ({label})");
+                            return addr.Address.ToString();
                         }
                     }
                 }
             }
-            catch
-            {
-                var host = Dns.GetHostEntry(Dns.GetHostName());
-                foreach (var ip in host.AddressList)
-                {
-                    if (ip.AddressFamily == AddressFamily.InterNetwork)
-                    {
-                        CmbIp.Items.Add(ip.ToString());
-                    }
-                }
-            }
-
-            if (CmbIp.Items.Count > 0) CmbIp.SelectedIndex = 0;
+            catch { }
+            return "127.0.0.1";
         }
 
         private string GetInterfaceLabel(System.Net.NetworkInformation.NetworkInterface ni, string ip)
@@ -309,15 +288,8 @@ namespace ModTogetherUniversal
                     }
 
                     _isHosting = false;
-                    BtnHost.Content = I18N.GetString("btn_host", App.Settings.Current.Language);
-                    BtnHost.Appearance = Wpf.Ui.Controls.ControlAppearance.Primary;
-                    LblHostStatus.Text = "Status: Ready";
-                    CmbIp.Visibility = Visibility.Collapsed;
-                    BtnCopyIp.Visibility = Visibility.Collapsed;
-                    BtnCopyPin.Visibility = Visibility.Collapsed;
-                    LblHostPin.Text = I18N.GetString("host_pin", App.Settings.Current.Language);
-                    LblHostPin.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(160, 160, 160));
                     ResetSessionDashboard();
+                    ShowIdleState();
                     return;
                 }
 
@@ -358,16 +330,9 @@ namespace ModTogetherUniversal
                 App.Network.StartBroadcasting(port, username);
 
                 _isHosting = true;
-                BtnHost.Content = I18N.GetString("btn_stop_host", App.Settings.Current.Language);
-                BtnHost.Appearance = Wpf.Ui.Controls.ControlAppearance.Danger;
-                LblHostStatus.Text = "Status: Hosting";
-
-                CmbIp.Visibility = Visibility.Visible;
-                BtnCopyIp.Visibility = Visibility.Visible;
-                BtnCopyPin.Visibility = Visibility.Visible;
-
-                LblHostPin.Text = $"PIN: {token}";
-                LblHostPin.Foreground = System.Windows.Media.Brushes.LightGreen;
+                
+                string ipDisplay = GetPrimaryLocalIp();
+                ShowActiveState("HOSTING LOBBY", token, $"{ipDisplay}:{port}");
             }
             catch (Exception ex)
             {
@@ -410,26 +375,19 @@ namespace ModTogetherUniversal
 
         private void BtnCopyIp_Click(object sender, RoutedEventArgs e)
         {
-            if (CmbIp.SelectedItem is string ipStr)
+            if (LblActiveIp != null && !string.IsNullOrEmpty(LblActiveIp.Text))
             {
-                string ip = ipStr.Split('(')[0].Trim();
-                int port = 52100;
-                if (ToggleCustomPort.IsChecked == true && int.TryParse(TxtCustomPort.Text, out int parsedPort))
-                {
-                    port = parsedPort;
-                }
-                Clipboard.SetText($"{ip}:{port}");
-                MainWindow.Instance?.Log($"📋 Copied IP: {ip}:{port}");
+                Clipboard.SetText(LblActiveIp.Text);
+                MainWindow.Instance?.Log($"📋 Copied IP: {LblActiveIp.Text}");
             }
         }
 
         private void BtnCopyPin_Click(object sender, RoutedEventArgs e)
         {
-            string token = LblHostPin.Text.Replace("PIN: ", "").Trim();
-            if (!string.IsNullOrEmpty(token) && token != I18N.GetString("host_pin", App.Settings.Current.Language))
+            if (LblActivePin != null && !string.IsNullOrEmpty(LblActivePin.Text))
             {
-                Clipboard.SetText(token);
-                MainWindow.Instance?.Log($"📋 Copied PIN: {token}");
+                Clipboard.SetText(LblActivePin.Text);
+                MainWindow.Instance?.Log($"📋 Copied PIN: {LblActivePin.Text}");
             }
         }
 
@@ -472,6 +430,7 @@ namespace ModTogetherUniversal
                 if (ok)
                 {
                     MainWindow.Instance?.Log("✅ Connected to Host!");
+                    ShowActiveState("CONNECTED TO LOBBY", token, $"{ip}:{port}");
 
                     string cacheDir = System.IO.Path.Combine(App.Settings.Current.GameDirectory, "GameMods");
                     System.IO.Directory.CreateDirectory(cacheDir);
@@ -500,23 +459,19 @@ namespace ModTogetherUniversal
             {
                 if (ListSessionMembers != null)
                 {
-                    ListSessionMembers.Items.Clear();
-                    foreach (var u in users)
+                    var viewModels = users.Select(u => new UserSyncViewModel
                     {
-                        var copy = new Services.UserSyncState
-                        {
-                            Username = u.Username,
-                            IsSynced = u.IsSynced,
-                            SyncProgress = u.SyncProgress,
-                            CurrentActivity = !string.IsNullOrEmpty(u.CurrentActivity) 
-                                ? u.CurrentActivity 
-                                : (u.IsSynced ? "🟢 Ready" : $"⚡ Syncing {u.SyncProgress}%"),
-                            PingMs = u.PingMs
-                        };
-                        ListSessionMembers.Items.Add(copy);
-                    }
-                    TxtSessionEmpty.Visibility = Visibility.Collapsed;
-                    LblSessionSummary.Text = $"{users.Count} member{(users.Count == 1 ? string.Empty : "s")} connected · {users.Count(u => u.IsSynced)} ready";
+                        Username = u.Username,
+                        IsSynced = u.IsSynced,
+                        SyncProgress = u.SyncProgress,
+                        CurrentActivity = !string.IsNullOrEmpty(u.CurrentActivity) 
+                            ? u.CurrentActivity 
+                            : (u.IsSynced ? "🟢 Ready" : $"⚡ Syncing {u.SyncProgress}%"),
+                        PingMs = u.PingMs
+                    }).ToList();
+
+                    ListSessionMembers.ItemsSource = viewModels;
+                    LblSessionSummary.Text = $"({users.Count} Connected)";
                 }
 
                 if (MainWindow.Instance != null && MainWindow.Instance.UserList != null)
@@ -538,7 +493,7 @@ namespace ModTogetherUniversal
             Application.Current.Dispatcher.Invoke(() =>
             {
                 App.Client.StopBackgroundTasks();
-                MainWindow.Instance?.Log("🚫 You have been kicked from the session.");
+                MainWindow.Instance?.Log("🚫 You have been disconnected from the session.");
                 if (MainWindow.Instance != null && MainWindow.Instance.BtnDisconnect != null)
                 {
                     MainWindow.Instance.BtnDisconnect.IsEnabled = false;
@@ -546,14 +501,45 @@ namespace ModTogetherUniversal
                     MainWindow.Instance.LblUsers.Text = "Connected Users: -";
                 }
                 ResetSessionDashboard();
+                ShowIdleState();
             });
+        }
+
+        private async void BtnLeaveRoom_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isHosting)
+            {
+                MainWindow.Instance?.Log("Stopping Host Server...");
+                await App.Server.StopAsync();
+                App.Watcher.Stop();
+                App.Network.StopBroadcasting();
+
+                if (ToggleUpnp.IsChecked == true)
+                {
+                    int stopPort = 52100;
+                    if (ToggleCustomPort.IsChecked == true && int.TryParse(TxtCustomPort.Text, out int parsedPort2)) stopPort = parsedPort2;
+                    await Services.UpnpService.Instance.DeletePortMappingAsync(stopPort);
+                }
+
+                _isHosting = false;
+            }
+            else
+            {
+                App.Client.StopBackgroundTasks();
+                if (MainWindow.Instance != null && MainWindow.Instance.BtnDisconnect != null)
+                {
+                    MainWindow.Instance.BtnDisconnect.IsEnabled = false;
+                }
+            }
+
+            ResetSessionDashboard();
+            ShowIdleState();
         }
 
         private void ResetSessionDashboard()
         {
-            ListSessionMembers?.Items.Clear();
-            if (TxtSessionEmpty != null) TxtSessionEmpty.Visibility = Visibility.Visible;
-            if (LblSessionSummary != null) LblSessionSummary.Text = "No active session";
+            ListSessionMembers.ItemsSource = null;
+            if (LblSessionSummary != null) LblSessionSummary.Text = "(0 Connected)";
         }
 
         private async void BtnScan_Click(object sender, RoutedEventArgs e)

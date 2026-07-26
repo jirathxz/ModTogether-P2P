@@ -170,8 +170,6 @@ namespace ModTogetherUniversal
             if (BtnCheckAll != null) BtnCheckAll.Content = I18N.GetString("btn_check_all", lang);
             if (BtnUncheckAll != null) BtnUncheckAll.Content = I18N.GetString("btn_uncheck_all", lang);
             if (BtnImportMod != null) BtnImportMod.Content = I18N.GetString("btn_import", lang);
-            if (BtnDeleteChecked != null) BtnDeleteChecked.Content = I18N.GetString("btn_delete_checked", lang);
-            if (BtnBackupChecked != null) BtnBackupChecked.Content = I18N.GetString("btn_backup", lang);
 
             ColInstallText = I18N.GetString("explorer_col_install", lang);
             ColFilenameText = I18N.GetString("explorer_col_filename", lang);
@@ -225,6 +223,95 @@ namespace ModTogetherUniversal
             if (CmbExplorerPresets != null) CmbExplorerPresets.IsEnabled = !isSessionActive;
             if (BtnSaveProfile != null) BtnSaveProfile.IsEnabled = !isSessionActive;
             if (BtnDeleteProfile != null) BtnDeleteProfile.IsEnabled = !isSessionActive;
+        }
+
+        private void ListMods_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ListMods.SelectedItem is ModItemData mod)
+            {
+                PanelEmptyInspector.Visibility = Visibility.Collapsed;
+                PanelModInspector.Visibility = Visibility.Visible;
+
+                InspectorTitle.Text = mod.Filename;
+                InspectorSize.Text = mod.Size;
+                InspectorPriority.Text = mod.Priority.ToString();
+                InspectorDateModified.Text = mod.DateModified;
+                InspectorFilePath.Text = System.IO.Path.Combine(ModsDirectory, mod.Filename);
+
+                if (mod.IsChecked)
+                {
+                    InspectorStatusText.Text = "Installed / Active";
+                    InspectorStatusText.Foreground = (System.Windows.Media.Brush)FindResource("SystemFillColorSuccessBrush");
+                    BtnInspectorToggle.Content = "Uninstall Mod";
+                    BtnInspectorToggle.Appearance = Wpf.Ui.Controls.ControlAppearance.Secondary;
+                }
+                else
+                {
+                    InspectorStatusText.Text = "Uninstalled / Disabled";
+                    InspectorStatusText.Foreground = (System.Windows.Media.Brush)FindResource("TextFillColorSecondaryBrush");
+                    BtnInspectorToggle.Content = "Install Mod";
+                    BtnInspectorToggle.Appearance = Wpf.Ui.Controls.ControlAppearance.Success;
+                }
+
+                if (mod.ConflictVisibility == Visibility.Visible)
+                {
+                    CardInspectorConflict.Visibility = Visibility.Visible;
+                    InspectorConflictText.Text = mod.ConflictWarningText;
+                }
+                else
+                {
+                    CardInspectorConflict.Visibility = Visibility.Collapsed;
+                }
+
+                if (mod.OwnersBadgeVisibility == Visibility.Visible)
+                {
+                    CardInspectorOwners.Visibility = Visibility.Visible;
+                    InspectorOwnersText.Text = mod.OwnersBadgeText;
+                }
+                else
+                {
+                    CardInspectorOwners.Visibility = Visibility.Collapsed;
+                }
+            }
+            else
+            {
+                PanelEmptyInspector.Visibility = Visibility.Visible;
+                PanelModInspector.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void BtnInspectorToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (ListMods.SelectedItem is ModItemData mod)
+            {
+                if (!IsInstallAllowed)
+                {
+                    var plugin = PluginManager.Instance.LoadedPlugins.FirstOrDefault(p => PluginManager.Instance.IsPluginForGame(p, App.Settings.Current.GameDirectory));
+                    string pName = plugin?.Name ?? "Plugin";
+                    MessageBox.Show($"Mod installation for this game is managed by the '{pName}' plugin.\n\nPlease use the '{pName}' tab in the menu to manage and toggle mods.", "Managed by Plugin", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                mod.IsChecked = !mod.IsChecked;
+                TryApplyInstallationState(mod, mod.IsChecked, out _);
+                ListMods_SelectionChanged(sender, null!);
+            }
+        }
+
+        private void BtnInspectorBackup_Click(object sender, RoutedEventArgs e)
+        {
+            if (ListMods.SelectedItem is ModItemData mod)
+            {
+                MenuItem_Backup_Click(sender, e);
+            }
+        }
+
+        private void BtnInspectorDelete_Click(object sender, RoutedEventArgs e)
+        {
+            if (ListMods.SelectedItem is ModItemData mod)
+            {
+                MenuItem_Delete_Click(sender, e);
+            }
         }
 
         private void BtnInstallChecked_Click(object sender, RoutedEventArgs e)

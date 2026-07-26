@@ -38,7 +38,7 @@ echo [+] Restore completed successfully.
 echo.
 echo [*] [2/3] Building Lightweight Edition (Requires .NET 8, ~10MB)...
 echo     Running dotnet publish...
-dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=false -p:DebugType=embedded -p:DebugSymbols=true -o "..\dist\Lightweight" -v m
+dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=false -p:DebugType=none -p:DebugSymbols=false -o "..\dist\Lightweight" -v m
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] ERROR: Lightweight build failed!
@@ -50,7 +50,7 @@ echo [+] Lightweight build completed successfully.
 echo.
 echo [*] [3/3] Building Standalone Edition (No .NET required, ~85MB)...
 echo     Running dotnet publish...
-dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=true -p:DebugType=embedded -p:DebugSymbols=true -o "..\dist\Standalone" -v m
+dotnet publish "ModTogetherUniversal.csproj" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=false -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishReadyToRun=false -p:DebugType=none -p:DebugSymbols=false -o "..\dist\Standalone" -v m
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] ERROR: Standalone build failed!
@@ -63,17 +63,20 @@ echo.
 echo [*] Finalizing build and organizing output...
 ping 127.0.0.1 -n 2 > nul
 
-echo Building ModTogether.Plugins.MHW Plugin...
+echo Building ModTogether Plugins...
 cd ..
 dotnet build "ModTogether.Plugins.MHW\ModTogether.Plugins.MHW.csproj" -c Release
+dotnet build "ModTogether.Plugins.MHWilds\ModTogether.Plugins.MHWilds.csproj" -c Release
 
 :: Create output subfolders
 if not exist "dist\Standalone\Plugins" mkdir "dist\Standalone\Plugins"
 if not exist "dist\Lightweight\Plugins" mkdir "dist\Lightweight\Plugins"
 
-:: Copy MHW plugin DLL
+:: Copy Plugin DLLs
 copy /Y "ModTogether.Plugins.MHW\bin\Release\net8.0-windows\ModTogether.Plugins.MHW.dll" "dist\Standalone\Plugins\" >nul
 copy /Y "ModTogether.Plugins.MHW\bin\Release\net8.0-windows\ModTogether.Plugins.MHW.dll" "dist\Lightweight\Plugins\" >nul
+copy /Y "ModTogether.Plugins.MHWilds\bin\Release\net8.0-windows\ModTogether.Plugins.MHWilds.dll" "dist\Standalone\Plugins\" >nul
+copy /Y "ModTogether.Plugins.MHWilds\bin\Release\net8.0-windows\ModTogether.Plugins.MHWilds.dll" "dist\Lightweight\Plugins\" >nul
 
 cd "ModTogetherUniversal"
 
@@ -92,6 +95,7 @@ xcopy /E /I /Y "Plugins" "..\dist\Standalone\Plugins" >nul
 xcopy /E /I /Y "Plugins" "..\dist\Lightweight\Plugins" >nul
 if exist "..\dist\Standalone\Plugins\ModTogether.API.dll" del /Q "..\dist\Standalone\Plugins\ModTogether.API.dll"
 if exist "..\dist\Lightweight\Plugins\ModTogether.API.dll" del /Q "..\dist\Lightweight\Plugins\ModTogether.API.dll"
+
 
 echo.
 echo =====================================================================

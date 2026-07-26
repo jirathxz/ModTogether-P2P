@@ -1,34 +1,89 @@
-# Ignore everything by default
-*
+# =====================================================================
+# ModTogether - Comprehensive .gitignore
+# Prevents leak of build outputs, credentials, logs, and temp files
+# =====================================================================
 
-# Whitelist essential root files
-!*.sln
-!*.md
-!*.bat
-!.gitignore
+# ---------------------------------------------------------------------
+# 1. Security & Personal Credentials (NEVER COMMIT)
+# ---------------------------------------------------------------------
+*.pfx
+*.p12
+*.cer
+*.crt
+*.pem
+*.key
+*.snk
+*.asc
+*.env
+*.env.*
+appsettings*.Development.json
+appsettings*.Local.json
+*.userossc
 
-# Whitelist main program source code & plugins (extensions)
-!ModTogether.API/
-!ModTogetherUniversal/
-!ModTogether.Extensions.MHW/
+# ---------------------------------------------------------------------
+# 2. Build Outputs & Compiled Binaries
+# ---------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Dd]ist/
+[Pp]ackages/
+packages/
+[Bb]uild/
+[Pp]ublish/
+*_wpftmp.csproj
 
-# Unignore everything inside whitelisted directories
-!ModTogether.API/**
-!ModTogetherUniversal/**
-!ModTogether.Extensions.MHW/**
-
-# Explicitly ignore build outputs, caches, and temp files
-bin/
-obj/
-dist/
-build/
-*.user
-*.suo
+# ---------------------------------------------------------------------
+# 3. IDE, Editor & Tool Settings
+# ---------------------------------------------------------------------
 .vs/
 .vscode/
 .idea/
-GameMods/
-.recycle_mods/
-installed_mods.json
+.agents/
+.gemini/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+
+# ---------------------------------------------------------------------
+# 4. Logs, Scratch Files & Temporary Dumps
+# ---------------------------------------------------------------------
 *.log
 *.tmp
+*.temp
+_legacy/
+_info/
+ZipTest/
+*.bak
+*.swp
+*.diff
+out.log
+visual_tree.txt
+temp_manager.diff
+test.cs
+screenshot.png
+plugin_resolve_error.log
+plugin_types_debug.log
+error.log
+
+# ---------------------------------------------------------------------
+# 5. Virtual Environments & Legacy Temp Assets
+# ---------------------------------------------------------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# ---------------------------------------------------------------------
+# 6. App Runtime Data, Mod Presets & User Files
+# ---------------------------------------------------------------------
+GameMods/
+.recycle_mods/
+.stash/
+presets/
+sessions/
+mod_owners.json
+installed_mods.json
+updater.bat
+sign_executables.ps1

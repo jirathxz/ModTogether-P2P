@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Loader;
 using ModTogether.API;
 
 namespace ModTogetherUniversal.Services
@@ -159,7 +160,7 @@ namespace ModTogetherUniversal.Services
                             }
                         }
 
-                        assembly = Assembly.Load(rawAssembly);
+                        assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(file));
                         OnLog?.Invoke($"[PluginManager] Loaded {simpleName} from Plugins directory.");
                         
                         // Register for WPF URI Resolution
@@ -263,13 +264,7 @@ namespace ModTogetherUniversal.Services
         public bool IsPluginForGame(IModPlugin ext, string gameDir)
         {
             if (string.IsNullOrEmpty(gameDir)) return false;
-            
-            if (ext.TargetGame == "Monster Hunter: World")
-            {
-                return File.Exists(Path.Combine(gameDir, "MonsterHunterWorld.exe"));
-            }
-
-            return false;
+            return ext.IsValidGameDirectory(gameDir);
         }
 
         private string ComputeSha256(byte[] rawBytes)
@@ -342,6 +337,7 @@ namespace ModTogetherUniversal.Services
         public void Initialize(string gameDirectory) => _type.GetMethod("Initialize")?.Invoke(_instance, new object[] { gameDirectory });
         public void SetLanguage(string language) => _type.GetMethod("SetLanguage")?.Invoke(_instance, new object[] { language });
         public System.Windows.Controls.Page CreatePage() => (System.Windows.Controls.Page)_type.GetMethod("CreatePage")?.Invoke(_instance, null)!;
+        public bool IsValidGameDirectory(string gameDirectory) => (bool)(_type.GetMethod("IsValidGameDirectory")?.Invoke(_instance, new object[] { gameDirectory }) ?? false);
     }
 }
 

@@ -102,9 +102,14 @@ namespace ModTogetherUniversal
 
         private void ListMods_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var hasSelection = ListMods.SelectedItem != null;
-            BtnRestore.IsEnabled = hasSelection;
-            BtnDelete.IsEnabled = hasSelection;
+            var item = ListMods.SelectedItem as ModItemData;
+            var hasSelection = item != null;
+            if (BtnRestore != null) BtnRestore.IsEnabled = hasSelection;
+            if (BtnDelete != null) BtnDelete.IsEnabled = hasSelection;
+            if (LblSelectedModInfo != null)
+            {
+                LblSelectedModInfo.Text = hasSelection ? item?.DisplayName ?? string.Empty : "Select a mod from the list to inspect.";
+            }
         }
 
         private void BtnCheckAll_Click(object sender, RoutedEventArgs e)

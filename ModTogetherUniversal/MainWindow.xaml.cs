@@ -113,14 +113,17 @@ namespace ModTogetherUniversal
                 });
             };
             
-            App.Client.OnDownloadProgress += pct => UpdateDownloadProgress(pct);
-            App.Client.OnUploadProgress += pct => UpdateUploadProgress(pct);
-            
-            App.Client.OnModDownloaded += (modFilename) => 
+            if (App.Client != null)
             {
-                // Just log that it was downloaded successfully
-                Log($"ðŸ“¥ Downloaded Mod: {modFilename}");
-            };
+                App.Client.OnDownloadProgress += pct => UpdateDownloadProgress(pct);
+                App.Client.OnUploadProgress += pct => UpdateUploadProgress(pct);
+                
+                App.Client.OnModDownloaded += (modFilename) => 
+                {
+                    // Just log that it was downloaded successfully
+                    Log($"ðŸ“¥ Downloaded Mod: {modFilename}");
+                };
+            }
             
             System.Threading.Tasks.Task.Run(async () => 
             {
@@ -134,9 +137,8 @@ namespace ModTogetherUniversal
                 });
                 
                 // Dump visual tree after 5 seconds to debug layout
-                Dispatcher.InvokeAsync(async () => 
+                _ = Dispatcher.InvokeAsync(async () => 
                 {
-                    RootNavigation.Navigate(typeof(ModTogether.Plugins.MHW.ManagerPage));
                     await System.Threading.Tasks.Task.Delay(5000);
                     try {
                         var logPath = @"C:\Users\jirathx\Desktop\ModTogether\visual_tree.txt";
@@ -386,6 +388,11 @@ namespace ModTogetherUniversal
         public void UpdateDownloadProgress(int value)
         {
             Dispatcher.Invoke(() => PbDownload.Value = value);
+        }
+
+        public void UpdateInstallProgress(int value)
+        {
+            Dispatcher.Invoke(() => PbInstall.Value = value);
         }
         
         private string FormatBytes(long bytes)

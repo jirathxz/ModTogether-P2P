@@ -5,107 +5,252 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="900"
-      Title="PluginsPage">
+      d:DesignHeight="750" d:DesignWidth="1000"
+      Title="PluginsPage"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
     </Page.Resources>
 
-    <Grid Margin="24">
+    <Grid Margin="16,12,16,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         
-        <!-- Header Section -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock x:Name="TxtTitle" Text="Plugins" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,4" />
-            <TextBlock x:Name="TxtDesc" Text="Manage installed game plugins, browse the online repository, and inspect security permissions." Foreground="Gray" Margin="0,0,0,16" />
-            
-            <WrapPanel Margin="0,0,0,8">
-                <ui:Button x:Name="BtnOpenFolder" Content="Open Plugins Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenFolder_Click" Margin="0,0,8,4" Appearance="Primary"/>
-                <ui:Button x:Name="BtnReloadPlugins" Content="Reload Plugins" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnReloadPlugins_Click" Margin="0,0,8,4" Appearance="Secondary"/>
-                <ui:Button x:Name="BtnCheckUpdates" Content="Check &amp; Update All" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnCheckUpdates_Click" Margin="0,0,8,4" Appearance="Success"/>
-            </WrapPanel>
-        </StackPanel>
-
-        <!-- Main Content Area -->
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Background="Transparent">
-            <StackPanel>
-                <!-- Online Plugin Store Section -->
-                <Expander x:Name="ExpOnlineStore" Header="🛒 Online Plugin Store / Repository" IsExpanded="False" Margin="0,0,0,24">
-                    <StackPanel>
-                        <ui:Card x:Name="CardNoPluginsNotice" Visibility="Collapsed" Margin="0,0,0,16" Padding="14" Background="#15FF9900" BorderBrush="Orange" BorderThickness="1">
-                            <StackPanel Orientation="Horizontal">
-                                <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                <TextBlock x:Name="TxtNoPluginsNotice" Text="⚠️ ไม่พบไฟล์ปลั๊กอิน (.dll) ใน GitHub Release เวอร์ชันล่าสุด" VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                            </StackPanel>
-                        </ui:Card>
-                        <ItemsControl x:Name="ItemsOnlineStore">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <ui:Card Margin="0,0,0,10" Padding="16">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" />
-                                            <ui:Badge Content="{Binding Version}" Appearance="Secondary" Margin="8,0,0,0" VerticalAlignment="Center" />
-                                            <ui:Badge Content="{Binding TrustLevel}" Appearance="Success" Margin="8,0,0,0" VerticalAlignment="Center" />
-                                            <ui:Badge Content="✅ Installed" Appearance="Info" Margin="8,0,0,0" VerticalAlignment="Center" Visibility="{Binding IsInstalled, Converter={StaticResource BoolToVisConverter}}" />
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding TargetGame, StringFormat='Target Game: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,4,0,2" FontWeight="Medium" />
-                                        <TextBlock Text="{Binding Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,6" />
-                                        <TextBlock Text="{Binding Permissions, StringFormat='Permissions: {0}'}" FontSize="12" Foreground="LightBlue" />
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
-                                        <ui:Button Content="Install Plugin" Icon="{ui:SymbolIcon ArrowDownload24}" Tag="{Binding}" Click="BtnInstallStorePlugin_Click" Appearance="Primary" Padding="12,6" />
-                                    </StackPanel>
-                                </Grid>
-                            </ui:Card>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Expander>
-
-                <!-- Installed Plugins & Security Inspector Section -->
-                <TextBlock x:Name="TxtInstalledTitle" Text="🛡️ Installed Plugins &amp; Security Inspector" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
-                <ui:ListView x:Name="ListInstalledPlugins" SelectionMode="Single" Background="Transparent" BorderThickness="0" VirtualizingPanel.ScrollUnit="Pixel">
-                    <ui:ListView.ItemTemplate>
-                        <DataTemplate>
-                            <ui:Card Margin="0,0,0,8" Padding="16">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"/>
-                                            <ui:Badge Appearance="Secondary" Content="{Binding Version}" Margin="8,0,0,0" VerticalAlignment="Center" />
-                                            <ui:Badge Appearance="Success" Content="{Binding TargetGame}" Margin="8,0,0,0" VerticalAlignment="Center" />
-                                            <ui:Badge Appearance="Primary" Content="Verified Trust" Margin="8,0,0,0" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <TextBlock Text="{Binding Description}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,6"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Permissions: 📁 Disk Access, 🌐 P2P Sync, ⚙️ Game API" FontSize="12" Foreground="LightBlue" Margin="0,0,16,0" />
-                                            <TextBlock Text="{Binding Author, StringFormat='Author: {0}'}" FontSize="12" Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
-                                        <ui:Button Content="Delete Plugin" Icon="{ui:SymbolIcon Delete24}" Tag="{Binding}" Click="BtnDeleteInstalledPlugin_Click" Appearance="Danger" Padding="12,6" />
-                                    </StackPanel>
-                                </Grid>
-                            </ui:Card>
-                        </DataTemplate>
-                    </ui:ListView.ItemTemplate>
-                </ui:ListView>
+        <!-- Header & Global Toolbar Section -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="TxtTitle" Text="Plugins &amp; Extensions" FontSize="22" FontWeight="Bold" Margin="0,0,0,4" />
+                <TextBlock x:Name="TxtDesc" Text="Manage installed game plugins, discover extensions from the repository, and inspect security permissions." Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4" />
             </StackPanel>
-        </ScrollViewer>
+
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                <ui:Button x:Name="BtnCheckUpdates" Content="Check Updates" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnCheckUpdates_Click" Appearance="Success" Margin="0,0,6,0" MinHeight="32" Padding="12,0" FontSize="12" />
+                <ui:Button x:Name="BtnReloadPlugins" Content="Reload" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnReloadPlugins_Click" Appearance="Secondary" Margin="0,0,6,0" MinHeight="32" Padding="12,0" FontSize="12" />
+                <ui:Button x:Name="BtnOpenFolder" Content="Plugins Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenFolder_Click" MinHeight="32" Padding="12,0" FontSize="12" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Workspace: Master-Detail 2-Column Layout -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.2*" MinWidth="360" /> <!-- Plugin Library (Left) -->
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" MinWidth="320" />    <!-- Plugin Inspector / Details (Right) -->
+            </Grid.ColumnDefinitions>
+
+            <!-- ============================== -->
+            <!-- LEFT PANEL: Plugin Library     -->
+            <!-- ============================== -->
+            <ui:Card Grid.Column="0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Filter / Header Bar -->
+                    <Border Grid.Row="0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="14,12">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="Library24" FontSize="16" Margin="0,0,6,0" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                                <TextBlock Text="Plugin Repository" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </StackPanel>
+
+                            <ComboBox x:Name="CmbFilter" SelectedIndex="0" HorizontalAlignment="Right" SelectionChanged="CmbFilter_SelectionChanged" MinHeight="32" VerticalAlignment="Center" FontSize="12" Width="140">
+                                <ComboBoxItem Content="All Plugins" />
+                                <ComboBoxItem Content="Installed Only" />
+                                <ComboBoxItem Content="Online Store" />
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+
+                    <!-- No Dll / Store Warning Banner (if offline or empty) -->
+                    <Border Grid.Row="1" x:Name="CardNoPluginsNotice" Visibility="Collapsed" Padding="12,8" Background="#15FF9900" BorderBrush="Orange" BorderThickness="0,0,0,1">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Margin="0,0,8,0" VerticalAlignment="Center" />
+                            <TextBlock x:Name="TxtNoPluginsNotice" Text="⚠️ Offline mode or no plugin releases found in repository." VerticalAlignment="Center" TextWrapping="Wrap" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Plugin Master List -->
+                    <ListView Grid.Row="2" x:Name="ListPlugins" 
+                              SelectionMode="Single" 
+                              Background="Transparent" 
+                              BorderThickness="0" 
+                              AlternationCount="2" 
+                              VirtualizingPanel.ScrollUnit="Pixel"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              SelectionChanged="ListPlugins_SelectionChanged"
+                              Padding="6,4">
+                        <ListView.GroupStyle>
+                            <GroupStyle>
+                                <GroupStyle.HeaderTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="6,10,6,4" Margin="0,10,0,6" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </GroupStyle.HeaderTemplate>
+                            </GroupStyle>
+                        </ListView.GroupStyle>
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListViewItem}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0,2" />
+                                <Setter Property="Padding" Value="10,10" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Plugin Icon -->
+                                    <Border Grid.Column="0" Width="36" Height="36" CornerRadius="6" Background="{DynamicResource ControlFillColorSecondaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center">
+                                        <ui:SymbolIcon Symbol="Games24" FontSize="18" Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=Foreground}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+
+                                    <!-- Title & Target Game -->
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Version, StringFormat='v{0}'}" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding TargetGame, StringFormat='Game: {0}'}" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                    </StackPanel>
+
+                                    <!-- Status Badge -->
+                                    <ui:Badge Grid.Column="2" Content="{Binding StatusText}" Appearance="{Binding BadgeAppearance}" VerticalAlignment="Center" Margin="6,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+            </ui:Card>
+
+            <!-- ============================== -->
+            <!-- RIGHT PANEL: Plugin Inspector  -->
+            <!-- ============================== -->
+            <ui:Card Grid.Column="2" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Grid>
+                    <!-- Content when NO item is selected -->
+                    <Grid x:Name="PanelEmptyInspector" Visibility="Visible">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="PuzzlePiece24" FontSize="48" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,12" />
+                            <TextBlock Text="Select a plugin to view security &amp; options" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
+                            <TextBlock Text="Choose a game plugin or repository extension from the left panel to inspect permissions and manage installation." FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="270" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Content when a plugin IS selected -->
+                    <Grid x:Name="PanelPluginInspector" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Inspector Header -->
+                        <Border Grid.Row="0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="16,14" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Width="48" Height="48" CornerRadius="8" Background="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,12,0">
+                                    <ui:SymbolIcon Symbol="PuzzlePiece24" FontSize="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock x:Name="InspectorTitle" Text="Plugin Name" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                        <TextBlock x:Name="InspectorAuthor" Text="Author: jirathxz" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text=" • " FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                        <TextBlock x:Name="InspectorTargetGame" Text="Target: Monster Hunter Wilds" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Inspector Body (Scrollable Details) -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16">
+                            <StackPanel>
+                                <!-- Action Buttons Card -->
+                                <Border Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,14" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Plugin Actions" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,10" />
+
+                                        <ui:Button x:Name="BtnInspectorInstall" Content="Install / Update Plugin" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnInspectorInstall_Click" Appearance="Success" HorizontalAlignment="Stretch" Margin="0,0,0,8" Padding="12,8" FontWeight="SemiBold" MinHeight="36" />
+                                        
+                                        <ui:Button x:Name="BtnInspectorDelete" Content="Uninstall / Delete Plugin" Icon="{ui:SymbolIcon Delete24}" Click="BtnInspectorDelete_Click" Appearance="Danger" HorizontalAlignment="Stretch" Padding="12,6" FontSize="11" MinHeight="32" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- About / Description Card -->
+                                <Border Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,14" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="About Extension" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,8" />
+                                        <TextBlock x:Name="InspectorDescription" Text="No description provided." FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" LineHeight="18" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Security & Permissions Inspector Card -->
+                                <Border Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="12" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,8">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <ui:SymbolIcon Symbol="Shield24" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,6,0" FontSize="14" />
+                                                <TextBlock Text="Security Inspector" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                            </StackPanel>
+
+                                            <ui:Badge x:Name="InspectorTrustBadge" Content="Verified Trust" Appearance="Success" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                        </Grid>
+
+                                        <TextBlock Text="Required Permissions:" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,4" />
+                                        <Border Background="{DynamicResource ControlFillColorSecondaryBrush}" CornerRadius="4" Padding="8,6" Margin="0,0,0,8">
+                                            <TextBlock x:Name="InspectorPermissions" Text="📁 Disk Access, 🌐 P2P Sync, ⚙️ Game API" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" TextWrapping="Wrap" />
+                                        </Border>
+
+                                        <TextBlock Text="🔒 ModTogether verifies plugin integrity using SHA256 checksums before loading." FontSize="10" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </ui:Card>
+        </Grid>
     </Grid>
 </Page>

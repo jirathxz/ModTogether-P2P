@@ -17,6 +17,10 @@ namespace ModTogetherUniversal.Services
         private string _username = "";
         private int _lastChatIndex = 0;
 
+        public string ServerIp => _hostIp;
+        public int ServerPort => _port;
+        public string Token => _roomToken;
+
         public event Action<string>? OnLog;
         public event Action<int>? OnDownloadProgress;
         public event Action<string>? OnModDownloaded;

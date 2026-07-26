@@ -22,6 +22,7 @@ namespace ModTogetherUniversal.Services
         
         public string HostDir { get; private set; } = string.Empty;
         public string RoomToken { get; private set; } = string.Empty;
+        public int Port { get; private set; } = 52100;
         public string HostUsername { get; set; } = "Host";
         public bool IsRunning => _app != null;
 
@@ -64,6 +65,7 @@ namespace ModTogetherUniversal.Services
         {
             HostDir = hostDir;
             RoomToken = roomToken;
+            Port = port;
             ActiveUsers.Clear();
             KickedUsers.Clear();
             BannedUsers.Clear();

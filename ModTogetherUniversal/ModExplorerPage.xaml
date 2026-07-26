@@ -6,7 +6,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:local="clr-namespace:ModTogetherUniversal"
       mc:Ignorable="d" 
-      d:DesignHeight="700" d:DesignWidth="900"
+      d:DesignHeight="750" d:DesignWidth="1000"
       Title="ModExplorerPage"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}">
 
@@ -42,7 +42,7 @@
         </ContextMenu>
     </Page.Resources>
 
-    <Grid Margin="24">
+    <Grid Margin="16,12,16,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -50,186 +50,342 @@
         </Grid.RowDefinitions>
 
         <!-- Header Section -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock x:Name="TxtTitle" Text="Mod Explorer" FontSize="24" FontWeight="SemiBold" Margin="0,0,0,8" />
-            <TextBlock x:Name="TxtDesc" Text="Generic mod manager. Select a target path and choose how mods should be installed." Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,8" />
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock x:Name="TxtTitle" Text="Mod Explorer" FontSize="22" FontWeight="Bold" Margin="0,0,0,4" />
+            <TextBlock x:Name="TxtDesc" Text="Generic mod manager. Select a target path and choose how mods should be installed." Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4" />
 
             <!-- Plugin Notice Banner -->
-            <ui:Card x:Name="CardPluginNotice" Visibility="Collapsed" Margin="0,4,0,0" Background="#2000FF7F" BorderBrush="LightGreen" BorderThickness="1" Padding="12">
+            <ui:Card x:Name="CardPluginNotice" Visibility="Collapsed" Margin="0,4,0,0" Background="{DynamicResource ControlFillColorSecondaryBrush}" BorderBrush="{DynamicResource SystemAccentColorPrimaryBrush}" BorderThickness="1" Padding="12">
                 <StackPanel Orientation="Horizontal">
-                    <ui:SymbolIcon Symbol="CheckmarkCircle24" Foreground="LightGreen" Margin="0,0,10,0" VerticalAlignment="Center" />
-                    <TextBlock x:Name="TxtPluginNotice" Text="⚡ Dedicated Plugin Active: Mod installation for this game is managed by the plugin. Use the dedicated Plugin tab to manage and install mods." VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <ui:SymbolIcon Symbol="CheckmarkCircle24" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <TextBlock x:Name="TxtPluginNotice" Text="⚡ Dedicated Plugin Active: Mod installation for this game is managed by the plugin." VerticalAlignment="Center" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 </StackPanel>
             </ui:Card>
         </StackPanel>
 
         <!-- Configuration & Presets Section -->
-        <ui:Card Grid.Row="1" Margin="0,0,0,16" Padding="16">
-            <StackPanel>
-                <!-- Row 1: Mod Folder Path -->
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="TxtModFolderLabel" Grid.Column="0" Text="Mod Install Folder:" VerticalAlignment="Center" FontWeight="SemiBold" />
-                    <TextBlock x:Name="TxtModFolderValue" Grid.Column="1" Text="Not configured — please set in Settings" VerticalAlignment="Center" Foreground="Gray" TextTrimming="CharacterEllipsis" />
-                </Grid>
+        <ui:Card Grid.Row="1" Margin="0,0,0,12" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <!-- Row 2: Install Type -->
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock x:Name="TxtInstallTypeLabel" Grid.Column="0" Text="Install Type:" VerticalAlignment="Center" FontWeight="SemiBold" />
-                    <ComboBox Grid.Column="1" x:Name="CmbInstallType" SelectedIndex="0" MaxWidth="400" HorizontalAlignment="Left" SelectionChanged="CmbInstallType_SelectionChanged">
-                        <ComboBoxItem x:Name="CmbItemSingle" Content="Single File (Copy files directly)" />
-                        <ComboBoxItem x:Name="CmbItemExtract" Content="Extract File (Extract archive into Target Path)" />
-                    </ComboBox>
-                </Grid>
+                <!-- Left: Target & Install Type -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="TxtModFolderLabel" Grid.Column="0" Text="Mod Install Folder:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                        <TextBlock x:Name="TxtModFolderValue" Grid.Column="1" Text="Not configured" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" FontSize="12" />
+                    </Grid>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="TxtInstallTypeLabel" Grid.Column="0" Text="Install Type:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" />
+                        <ComboBox Grid.Column="1" x:Name="CmbInstallType" SelectedIndex="0" HorizontalAlignment="Stretch" SelectionChanged="CmbInstallType_SelectionChanged" MinHeight="36" FontSize="12" VerticalAlignment="Center">
+                            <ComboBoxItem x:Name="CmbItemSingle" Content="Single File (Copy files directly)" />
+                            <ComboBoxItem x:Name="CmbItemExtract" Content="Extract File (Extract archive into Target Path)" />
+                        </ComboBox>
+                    </Grid>
+                </StackPanel>
 
-                <!-- Row 3: Mod Profiles & Presets -->
-                <Grid>
+                <!-- Separator -->
+                <Border Grid.Column="1" Width="1" Background="{DynamicResource CardStrokeColorDefaultBrush}" Margin="20,0" />
+
+                <!-- Right: Presets Management -->
+                <Grid Grid.Column="2" VerticalAlignment="Center">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="160" />
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Mod Profile Preset:" Grid.Column="0" VerticalAlignment="Center" FontWeight="SemiBold" />
-                    <ComboBox x:Name="CmbExplorerPresets" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" SelectionChanged="CmbExplorerPresets_SelectionChanged" HorizontalAlignment="Stretch" />
-                    <ui:TextBox x:Name="TxtProfileName" PlaceholderText="New Profile Name..." Grid.Column="2" Margin="0,0,8,0" VerticalAlignment="Center" />
-                    <ui:Button x:Name="BtnSaveProfile" Content="Save Profile" Click="BtnSaveProfile_Click" Grid.Column="3" Margin="0,0,8,0" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" />
-                    <ui:Button x:Name="BtnDeleteProfile" Content="Delete" Click="BtnDeleteProfile_Click" Grid.Column="4" Appearance="Danger" Icon="{ui:SymbolIcon Delete24}" />
+                    
+                    <TextBlock Text="Mod Profile Preset:" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" Margin="0,0,0,6" />
+                    <ComboBox x:Name="CmbExplorerPresets" Grid.Row="1" Grid.Column="0" Margin="0,0,8,0" VerticalAlignment="Center" SelectionChanged="CmbExplorerPresets_SelectionChanged" HorizontalAlignment="Stretch" MinHeight="32" FontSize="12" />
+                    
+                    <ui:TextBox x:Name="TxtProfileName" PlaceholderText="New Profile Name..." Grid.Row="1" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" Width="140" MinHeight="32" FontSize="12" />
+                    <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:Button x:Name="BtnSaveProfile" Content="Save" Click="BtnSaveProfile_Click" Margin="0,0,6,0" Appearance="Primary" Icon="{ui:SymbolIcon Save24}" MinHeight="32" Padding="12,0" FontSize="12" />
+                        <ui:Button x:Name="BtnDeleteProfile" Content="Delete" Click="BtnDeleteProfile_Click" Appearance="Danger" Icon="{ui:SymbolIcon Delete24}" MinHeight="32" Padding="12,0" FontSize="12" />
+                    </StackPanel>
                 </Grid>
-            </StackPanel>
+            </Grid>
         </ui:Card>
 
-
-        <!-- Mods List Section -->
+        <!-- Main Workspace: Master-Detail 2-Column Layout -->
         <Grid Grid.Row="2">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.3*" MinWidth="380" /> <!-- Mod List (Left) -->
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" MinWidth="320" />    <!-- Inspector / Details (Right) -->
+            </Grid.ColumnDefinitions>
 
-            <!-- Toolbar -->
-            <WrapPanel Grid.Row="0" Margin="0,0,0,8" VerticalAlignment="Center">
-                <ui:Button x:Name="BtnInstallChecked" Content="⚡ Install Checked" Icon="{ui:SymbolIcon CheckmarkCircle24}" Click="BtnInstallChecked_Click" Appearance="Success" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnUninstallChecked" Content="❎ Uninstall Checked" Icon="{ui:SymbolIcon DismissCircle24}" Click="BtnUninstallChecked_Click" Appearance="Secondary" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnCheckAll" Content="Check All" Icon="{ui:SymbolIcon CheckmarkSquare24}" Click="BtnCheckAll_Click" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnUncheckAll" Content="Uncheck All" Icon="{ui:SymbolIcon Square24}" Click="BtnUncheckAll_Click" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnScanConflicts" Content="Scan Conflicts ⚔️" Icon="{ui:SymbolIcon Warning24}" Click="BtnScanConflicts_Click" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnImportMod" Content="Import Mod" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnImportMod_Click" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnOpenModsFolder" Content="Open Mods Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenModsFolder_Click" Appearance="Primary" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnRefreshMods" Content="Refresh" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnRefreshMods_Click" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnBackupChecked" Content="Backup Checked" Icon="{ui:SymbolIcon Save24}" Click="BtnBackupChecked_Click" Margin="0,0,8,4" />
-                <ui:Button x:Name="BtnDeleteChecked" Content="Delete Checked" Icon="{ui:SymbolIcon Delete24}" Click="BtnDeleteChecked_Click" Appearance="Danger" Margin="0,0,8,4" />
-                <TextBlock x:Name="TxtStatus" VerticalAlignment="Center" Margin="8,0,0,4" Foreground="Gray" />
-            </WrapPanel>
+            <!-- ============================== -->
+            <!-- LEFT PANEL: Mod Library List   -->
+            <!-- ============================== -->
+            <ui:Card Grid.Column="0" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-            <ListView Grid.Row="1" x:Name="ListMods" SelectionMode="Single" Background="Transparent" BorderThickness="1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" AlternationCount="2" VirtualizingPanel.ScrollUnit="Pixel">
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="{x:Type ListViewItem}">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="Margin" Value="0,2" />
-                        <Setter Property="Padding" Value="8,4" />
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="BorderThickness" Value="0" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="{x:Type ListViewItem}">
-                                    <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4">
-                                        <GridViewRowPresenter Content="{TemplateBinding Content}" Columns="{TemplateBinding GridView.ColumnCollection}" />
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Setter Property="ContextMenu" Value="{StaticResource ModItemContextMenu}" />
-                        <Style.Triggers>
-                            <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                                <Setter Property="Background" Value="#05FFFFFF" />
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#10FFFFFF" />
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#20FFFFFF" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Width="130">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.ColInstallText, RelativeSource={RelativeSource AncestorType=Page}}" FontWeight="SemiBold" />
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding DataContext.IsInstallAllowed, RelativeSource={RelativeSource AncestorType=Page}}" Checked="Mod_Checked" Unchecked="Mod_Unchecked" VerticalAlignment="Center" Margin="0,0,6,0" ToolTip="{Binding DataContext.InstallToolTip, RelativeSource={RelativeSource AncestorType=Page}}" />
-                                        <ui:Button Content="Install" Padding="6,2" FontSize="11" IsEnabled="{Binding DataContext.IsInstallAllowed, RelativeSource={RelativeSource AncestorType=Page}}" Tag="{Binding}" Click="BtnInstallRow_Click" Appearance="Primary" VerticalAlignment="Center" />
+                    <!-- Header & Counts -->
+                    <Border Grid.Row="0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="12,10">
+                        <Grid>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="16" Margin="0,0,6,0" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                                <TextBlock Text="Available Mods" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                            </StackPanel>
+                            
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <ui:Button x:Name="BtnCheckAll" Content="Check All" Icon="{ui:SymbolIcon CheckmarkSquare24}" Click="BtnCheckAll_Click" Padding="8,4" FontSize="11" Margin="0,0,4,0" />
+                                <ui:Button x:Name="BtnUncheckAll" Content="Uncheck All" Icon="{ui:SymbolIcon Square24}" Click="BtnUncheckAll_Click" Padding="8,4" FontSize="11" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Action Toolbar -->
+                    <Border Grid.Row="1" Padding="10,8" Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1">
+                        <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ui:Button x:Name="BtnInstallChecked" Content="Install Checked" Icon="{ui:SymbolIcon CheckmarkCircle24}" Click="BtnInstallChecked_Click" Appearance="Success" Margin="0,0,6,4" Padding="10,4" FontSize="11" FontWeight="SemiBold" />
+                            <ui:Button x:Name="BtnUninstallChecked" Content="Uninstall Checked" Icon="{ui:SymbolIcon DismissCircle24}" Click="BtnUninstallChecked_Click" Appearance="Secondary" Margin="0,0,6,4" Padding="10,4" FontSize="11" />
+                            <ui:Button x:Name="BtnScanConflicts" Content="Scan Conflicts" Icon="{ui:SymbolIcon Warning24}" Click="BtnScanConflicts_Click" Margin="0,0,6,4" Padding="8,4" FontSize="11" />
+                            <ui:Button x:Name="BtnImportMod" Content="Import" Icon="{ui:SymbolIcon ArrowDownload24}" Click="BtnImportMod_Click" Margin="0,0,6,4" Padding="8,4" FontSize="11" />
+                            <ui:Button x:Name="BtnOpenModsFolder" Content="Folder" Icon="{ui:SymbolIcon FolderOpen24}" Click="BtnOpenModsFolder_Click" Margin="0,0,6,4" Padding="8,4" FontSize="11" />
+                            <ui:Button x:Name="BtnRefreshMods" Content="Refresh" Icon="{ui:SymbolIcon ArrowClockwise24}" Click="BtnRefreshMods_Click" Margin="0,0,6,4" Padding="8,4" FontSize="11" />
+                        </WrapPanel>
+                    </Border>
+
+                    <!-- List of Mods (Custom ItemTemplate Card/Row) -->
+                    <ListView Grid.Row="2" x:Name="ListMods" 
+                              SelectionMode="Single" 
+                              Background="Transparent" 
+                              BorderThickness="0" 
+                              AlternationCount="2" 
+                              VirtualizingPanel.ScrollUnit="Pixel"
+                              ScrollViewer.VerticalScrollBarVisibility="Auto"
+                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                              SelectionChanged="ListMods_SelectionChanged"
+                              Padding="6,4">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="{x:Type ListViewItem}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Margin" Value="0,2" />
+                                <Setter Property="Padding" Value="8,8" />
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="{x:Type ListViewItem}">
+                                            <Border Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Setter Property="ContextMenu" Value="{StaticResource ModItemContextMenu}" />
+                                <Style.Triggers>
+                                    <Trigger Property="ItemsControl.AlternationIndex" Value="1">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource SystemAccentColorPrimaryBrush}" />
+                                        <Setter Property="Foreground" Value="White" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Checkbox for Mass Operations -->
+                                    <CheckBox Grid.Column="0" IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                              IsEnabled="{Binding DataContext.IsInstallAllowed, RelativeSource={RelativeSource AncestorType=Page}}" 
+                                              Checked="Mod_Checked" Unchecked="Mod_Unchecked" 
+                                              VerticalAlignment="Center" Margin="0,0,8,0" 
+                                              ToolTip="{Binding DataContext.InstallToolTip, RelativeSource={RelativeSource AncestorType=Page}}" />
+
+                                    <!-- Status Indicator Dot -->
+                                    <Ellipse Grid.Column="1" Width="8" Height="8" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+
+                                    <!-- Mod Filename & Owners Badge -->
+                                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Visibility="{Binding ConflictVisibility}" Margin="0,0,6,0" ToolTip="{Binding ConflictWarningText}" FontSize="12" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Filename}" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                                        </StackPanel>
                                     </StackPanel>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Width="360">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.ColFilenameText, RelativeSource={RelativeSource AncestorType=Page}}" />
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                         <ui:SymbolIcon Symbol="Warning24" Foreground="Orange" Visibility="{Binding ConflictVisibility}" Margin="0,0,6,0" ToolTip="{Binding ConflictWarningText}" />
-                                         <TextBlock Text="{Binding Filename}" VerticalAlignment="Center" FontWeight="Medium" Foreground="{DynamicResource TextFillColorPrimaryBrush}" ToolTip="{Binding ConflictWarningText}" Margin="0,0,8,0" />
-                                         <ui:Badge Content="{Binding OwnersBadgeText}" Visibility="{Binding OwnersBadgeVisibility}" Appearance="Primary" VerticalAlignment="Center" ToolTip="Players who own/share this mod" />
-                                     </StackPanel>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Width="80" Header="Priority">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Priority}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="LightBlue" FontWeight="Bold" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Width="100">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.ColSizeText, RelativeSource={RelativeSource AncestorType=Page}}" />
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Size}" VerticalAlignment="Center" Foreground="Gray" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Width="180">
-                            <GridViewColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DataContext.ColModifiedText, RelativeSource={RelativeSource AncestorType=Page}}" />
-                                </DataTemplate>
-                            </GridViewColumn.HeaderTemplate>
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding DateModified}" VerticalAlignment="Center" Foreground="Gray" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
 
-            <ui:ProgressRing x:Name="LoadingRing" Visibility="Collapsed" IsIndeterminate="True" Width="64" Height="64" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="1" />
+                                    <!-- Priority Badge -->
+                                    <Border Grid.Column="3" CornerRadius="3" Padding="4,1" VerticalAlignment="Center" Margin="0,0,6,0" Background="{DynamicResource ControlFillColorSecondaryBrush}">
+                                        <TextBlock FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}">
+                                            <Run Text="P: " /><Run Text="{Binding Priority}" />
+                                        </TextBlock>
+                                    </Border>
+
+                                    <!-- File Size -->
+                                    <TextBlock Grid.Column="4" Text="{Binding Size}" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="4,0,0,0" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <!-- Status Bar Footer -->
+                    <Border Grid.Row="3" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="12,6" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                        <Grid>
+                            <TextBlock x:Name="TxtStatus" Text="Ready" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </Grid>
+                    </Border>
+                    
+                    <ui:ProgressRing x:Name="LoadingRing" Visibility="Collapsed" IsIndeterminate="True" Width="48" Height="48" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Row="2" />
+                </Grid>
+            </ui:Card>
+
+            <!-- ============================== -->
+            <!-- RIGHT PANEL: Mod Inspector     -->
+            <!-- ============================== -->
+            <ui:Card Grid.Column="2" Padding="0" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Grid>
+                    <!-- Content when NO item is selected -->
+                    <Grid x:Name="PanelEmptyInspector" Visibility="Visible">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <ui:SymbolIcon Symbol="Search24" FontSize="48" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Margin="0,0,0,12" />
+                            <TextBlock Text="Select a mod file to view details" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" />
+                            <TextBlock Text="Choose a mod from the list on the left to manage options, preview status, and check conflict details." FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="260" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Content when an item IS selected -->
+                    <Grid x:Name="PanelModInspector" Visibility="Collapsed">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Inspector Header Card -->
+                        <Border Grid.Row="0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="16,14" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <Border Grid.Column="0" Width="44" Height="44" CornerRadius="8" Background="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,12,0">
+                                    <ui:SymbolIcon Symbol="Document24" FontSize="22" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock x:Name="InspectorTitle" Text="Filename.zip" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                                        <TextBlock x:Name="InspectorStatusText" Text="Uninstalled" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                        <TextBlock Text=" • " FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                        <TextBlock x:Name="InspectorSize" Text="12.5 MB" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Inspector Body Details -->
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="16">
+                            <StackPanel>
+                                <!-- Action Card -->
+                                <Border Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,16" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Quick Actions" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,10" />
+                                        
+                                        <ui:Button x:Name="BtnInspectorToggle" Content="Install Mod" Icon="{ui:SymbolIcon CheckmarkCircle24}" Click="BtnInspectorToggle_Click" Appearance="Success" HorizontalAlignment="Stretch" Margin="0,0,0,8" Padding="12,8" FontWeight="SemiBold" />
+                                        
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <ui:Button x:Name="BtnInspectorBackup" Content="Backup" Icon="{ui:SymbolIcon Save24}" Click="BtnInspectorBackup_Click" Grid.Column="0" Margin="0,0,4,0" HorizontalAlignment="Stretch" Padding="8,6" FontSize="11" />
+                                            <ui:Button x:Name="BtnInspectorDelete" Content="Delete" Icon="{ui:SymbolIcon Delete24}" Click="BtnInspectorDelete_Click" Appearance="Danger" Grid.Column="1" Margin="4,0,0,0" HorizontalAlignment="Stretch" Padding="8,6" FontSize="11" />
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- File Information Card -->
+                                <Border Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,16" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="File Metadata" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,10" />
+                                        
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="Priority:" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" HorizontalAlignment="Left" />
+                                            <TextBlock x:Name="InspectorPriority" Text="0" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+                                        
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="Date Modified:" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" HorizontalAlignment="Left" />
+                                            <TextBlock x:Name="InspectorDateModified" Text="2026-07-26" FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" HorizontalAlignment="Right" />
+                                        </Grid>
+
+                                        <Grid Margin="0,0,0,6">
+                                            <TextBlock Text="File Path:" FontSize="11" Foreground="{DynamicResource TextFillColorTertiaryBrush}" HorizontalAlignment="Left" />
+                                        </Grid>
+                                        <TextBlock x:Name="InspectorFilePath" Text="C:\Mods\ModFile.zip" FontSize="10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Conflict Warning Section (Dynamic Visibility) -->
+                                <Border x:Name="CardInspectorConflict" Visibility="Collapsed" Background="#20FF0000" BorderBrush="Red" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,16">
+                                    <StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                            <ui:SymbolIcon Symbol="Warning24" Foreground="OrangeRed" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="Conflict Detected" FontWeight="Bold" Foreground="OrangeRed" FontSize="12" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="InspectorConflictText" Text="Conflicting with another active mod file." FontSize="11" Foreground="{DynamicResource TextFillColorPrimaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Shared Owners / Players (Dynamic Visibility) -->
+                                <Border x:Name="CardInspectorOwners" Visibility="Collapsed" Background="{DynamicResource ControlFillColorDefaultBrush}" CornerRadius="6" Padding="12" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Multiplayer Shared Owners" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,0,0,6" />
+                                        <TextBlock x:Name="InspectorOwnersText" Text="Player1, Player2" FontSize="11" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </ui:Card>
         </Grid>
     </Grid>
 </Page>

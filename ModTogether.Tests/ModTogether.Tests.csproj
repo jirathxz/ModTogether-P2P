@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ModTogetherUniversal\ModTogetherUniversal.csproj" />
+    <ProjectReference Include="..\ModTogether.Plugins.MHWilds\ModTogether.Plugins.MHWilds.csproj" />
+    <ProjectReference Include="..\ModTogether.Plugins.MHW\ModTogether.Plugins.MHW.csproj" />
+  </ItemGroup>
+
+</Project>

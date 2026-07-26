@@ -122,6 +122,16 @@
                             <ProgressBar x:Name="PbDownload" Value="0" />
                         </StackPanel>
                     </Grid>
+
+                    <Grid Margin="0,12,0,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <ui:SymbolIcon Symbol="Save24" FontSize="14" Margin="0,0,6,0"/>
+                                <TextBlock Text="Install Progress" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                            <ProgressBar x:Name="PbInstall" Value="0" />
+                        </StackPanel>
+                    </Grid>
                 </StackPanel>
             </ui:Card>
 
