@@ -26,11 +26,13 @@ appsettings*.Local.json
 [Bb]in/
 [Oo]bj/
 [Dd]ist/
+dist/
 [Pp]ackages/
 packages/
 [Bb]uild/
 [Pp]ublish/
 *_wpftmp.csproj
+*.nupkg
 
 # ---------------------------------------------------------------------
 # 3. IDE, Editor & Tool Settings
@@ -45,16 +47,25 @@ packages/
 *.userprefs
 *.sln.docstates
 *.DotSettings.user
+*.VisualState.xml
 
 # ---------------------------------------------------------------------
-# 4. Logs, Scratch Files & Temporary Dumps
+# 4. OS Specific Files
+# ---------------------------------------------------------------------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ---------------------------------------------------------------------
+# 5. Logs, Scratch Files & Temporary Dumps
 # ---------------------------------------------------------------------
 *.log
 *.tmp
 *.temp
-_legacy/
-_info/
-ZipTest/
 *.bak
 *.swp
 *.diff
@@ -68,19 +79,26 @@ plugin_types_debug.log
 error.log
 
 # ---------------------------------------------------------------------
-# 5. Virtual Environments & Legacy Temp Assets
+# 6. Rust & Python Leftovers / Virtual Environments
 # ---------------------------------------------------------------------
+target/
+Cargo.lock
+.cargo/
 .venv/
 venv/
+ENV/
 __pycache__/
 *.pyc
+_legacy/
 
 # ---------------------------------------------------------------------
-# 6. App Runtime Data, Mod Presets & User Files
+# 7. App Runtime Data, Mod Presets & User Files
 # ---------------------------------------------------------------------
 GameMods/
 .recycle_mods/
 .stash/
+_info/
+ZipTest/
 presets/
 sessions/
 mod_owners.json
