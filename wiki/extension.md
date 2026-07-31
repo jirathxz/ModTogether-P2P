@@ -3,7 +3,7 @@
 ModTogether Universal features a powerful **C# .NET Assembly Plugin System** that allows developers to create custom Mod Managers for **any game**. By implementing the `IModPlugin` interface from `ModTogether.API`, you can build fully functional, natively integrated mod management UI with WPF XAML.
 
 ## 🎮 What games can it be used for?
-**Any game!** The plugin system isn't bound to a specific game. You can create a plugin for Cyberpunk 2077, Stardew Valley, Resident Evil, or any other game that supports mods.
+**Any game!** The plugin system isn't bound to a specific game. You can create a plugin for anything game that supports mods.
 
 ---
 
