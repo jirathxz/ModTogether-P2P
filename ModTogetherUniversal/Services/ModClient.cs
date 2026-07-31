@@ -17,6 +17,8 @@ namespace ModTogetherUniversal.Services
         private string _username = "";
         private int _lastChatIndex = 0;
 
+        public System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> IgnoreSyncTriggers = new();
+
         public string ServerIp => _hostIp;
         public int ServerPort => _port;
         public string Token => _roomToken;
@@ -54,6 +56,7 @@ namespace ModTogetherUniversal.Services
         public int CurrentSyncProgress { get; private set; }
         public string CurrentActivity { get; private set; } = "";
         public int LastPingMs { get; private set; } = 0;
+        public List<UserSyncState> LastKnownUsers { get; private set; } = new();
 
         public async Task<bool> HeartbeatAsync()
         {
@@ -95,6 +98,8 @@ namespace ModTogetherUniversal.Services
                 _syncCts.Cancel();
                 _syncCts = null;
             }
+            // Bug G Fix: Clear host IP so IsConnected returns false after disconnect
+            _hostIp = "";
         }
 
         private async Task HeartbeatLoop(CancellationToken token)
@@ -117,6 +122,7 @@ namespace ModTogetherUniversal.Services
                     var serverData = await GetModsAsync();
                     if (serverData != null)
                     {
+                        LastKnownUsers = serverData.active_users;
                         OnUsersUpdate?.Invoke(serverData.active_users);
 
                         if (serverData.chat_messages != null && serverData.chat_messages.Count > _lastChatIndex)
@@ -127,15 +133,23 @@ namespace ModTogetherUniversal.Services
                             }
                             _lastChatIndex = serverData.chat_messages.Count;
                         }
+                        else if (serverData.chat_messages != null && _lastChatIndex > serverData.chat_messages.Count)
+                        {
+                            // Bug #4 Fix: Server pruned history (capped at 100), reset our index
+                            _lastChatIndex = serverData.chat_messages.Count;
+                        }
 
+                        var serverMods = new Dictionary<string, long>(serverData.mods, StringComparer.OrdinalIgnoreCase);
+                        var serverDeletedMods = new Dictionary<string, string>(serverData.deleted_mods, StringComparer.OrdinalIgnoreCase);
+                        
                         var localMods = new HashSet<string>(Directory.GetFiles(cacheDir, "*.*", SearchOption.AllDirectories)
                             .Select(f => Path.GetRelativePath(cacheDir, f).Replace("\\", "/"))
-                            .Where(f => !f.StartsWith(".recycle_mods/"))!);
+                            .Where(f => !f.StartsWith(".recycle_mods/"))!, StringComparer.OrdinalIgnoreCase);
 
                         var recycleDir = Path.Combine(cacheDir, ".recycle_mods");
 
                         // Pre-calculate sync tasks
-                        var modsToUpload = localMods.Where(m => !serverData.deleted_mods.ContainsKey(m) && !serverData.mods.ContainsKey(m)).ToList();
+                        var modsToUpload = localMods.Where(m => !serverDeletedMods.ContainsKey(m) && !serverMods.ContainsKey(m)).ToList();
                         
                         var modsToDownload = new List<string>();
                         foreach (var kvp in serverData.mods)
@@ -171,16 +185,17 @@ namespace ModTogetherUniversal.Services
                         {
                             if (token.IsCancellationRequested) break;
 
-                            if (serverData.deleted_mods.ContainsKey(localMod))
+                            if (serverDeletedMods.ContainsKey(localMod))
                             {
-                                string deleterName = serverData.deleted_mods[localMod];
+                                string deleterName = serverDeletedMods[localMod];
                                 // Sync Delete
                                 var fullPath = Path.Combine(cacheDir, localMod);
                                 var recyclePath = Path.Combine(recycleDir, localMod);
                                 Directory.CreateDirectory(recycleDir);
                                 try
                                 {
-                                    File.Move(fullPath, recyclePath, true);
+                                    IgnoreSyncTriggers[localMod] = DateTime.UtcNow;
+                                    ModTogether.API.FileHelper.SafeMove(fullPath, recyclePath, true);
                                     OnLog?.Invoke($"🗑️ Sync: {deleterName} deleted mod: {localMod} (Moved to recycle bin)");
                                     localMods.Remove(localMod);
                                 }
@@ -188,16 +203,24 @@ namespace ModTogetherUniversal.Services
                                 continue;
                             }
 
-                            if (!serverData.mods.ContainsKey(localMod))
+                            if (!serverMods.ContainsKey(localMod))
                             {
-                                CurrentActivity = $"Uploading {localMod}...";
+                                CurrentActivity = $"Uploading {Path.GetFileName(localMod)}...";
                                 await HeartbeatAsync();
                                 
                                 var fullPath = Path.Combine(cacheDir, localMod);
-                                await UploadModAsync(fullPath, localMod);
+                                bool success = await UploadModAsync(fullPath, localMod);
                                 
-                                completedTasks++;
-                                CurrentSyncProgress = (int)((completedTasks * 100.0) / totalTasks);
+                                if (success)
+                                {
+                                    completedTasks++;
+                                    CurrentSyncProgress = (int)((completedTasks * 100.0) / totalTasks);
+                                }
+                                else
+                                {
+                                    CurrentActivity = $"❌ Error Uploading: {Path.GetFileName(localMod)}";
+                                    goto doneProcessing; // Stop and wait for next loop
+                                }
                             }
                         }
 
@@ -219,14 +242,28 @@ namespace ModTogetherUniversal.Services
                                 await HeartbeatAsync();
                                 
                                 OnLog?.Invoke($"📥 Syncing mod from Host: {relPath}");
-                                await DownloadModAsync(relPath, cacheDir);
+                                bool success = await DownloadModAsync(relPath, cacheDir);
                                 
-                                completedTasks++;
-                                CurrentSyncProgress = (int)((completedTasks * 100.0) / totalTasks);
+                                if (success)
+                                {
+                                    completedTasks++;
+                                    CurrentSyncProgress = (int)((completedTasks * 100.0) / totalTasks);
+                                }
+                                else
+                                {
+                                    CurrentActivity = $"❌ Error Downloading: {Path.GetFileName(relPath)}";
+                                    goto doneProcessing; // Stop and wait for next loop
+                                }
                             }
                         }
 
+                        // Bug #3 Fix: Set IsSynced=true after all tasks complete in THIS iteration
+                        IsSynced = true;
+                        CurrentSyncProgress = 100;
+                        // Bug #1 Fix: Clear error activity now that everything succeeded
                         CurrentActivity = "";
+
+                        doneProcessing:
                         await HeartbeatAsync();
                     }
                 }
@@ -274,9 +311,12 @@ namespace ModTogetherUniversal.Services
 
         public async Task<bool> DownloadModAsync(string relPath, string saveDirectory)
         {
+            // Bug C Fix: Write to .tmp file first, then atomically move on success to avoid corrupt partial files
+            var savePath = Path.Combine(saveDirectory, relPath);
+            var tmpPath = savePath + ".tmp";
             try
             {
-                var savePath = Path.Combine(saveDirectory, relPath);
+                IgnoreSyncTriggers[relPath] = DateTime.UtcNow;
                 Directory.CreateDirectory(Path.GetDirectoryName(savePath)!);
 
                 using var response = await _httpClient.GetAsync($"http://{_hostIp}:{_port}/download/{Uri.EscapeDataString(relPath)}", HttpCompletionOption.ResponseHeadersRead);
@@ -284,32 +324,44 @@ namespace ModTogetherUniversal.Services
 
                 var totalBytes = response.Content.Headers.ContentLength ?? -1L;
                 using var contentStream = await response.Content.ReadAsStreamAsync();
-                using var fileStream = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
-                var totalRead = 0L;
-                var buffer = new byte[8192];
-                var isMoreToRead = true;
-
-                do
+                // Use a non-using scope so we can Close() before File.Move (avoid double-dispose)
+                var fileStream = new FileStream(tmpPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+                try
                 {
-                    var read = await contentStream.ReadAsync(buffer, 0, buffer.Length);
-                    if (read == 0)
+                    var totalRead = 0L;
+                    var buffer = new byte[8192];
+                    var isMoreToRead = true;
+
+                    do
                     {
-                        isMoreToRead = false;
-                    }
-                    else
-                    {
-                        await fileStream.WriteAsync(buffer, 0, read);
-                        totalRead += read;
-                        BandwidthTracker.AddDownloadedBytes(read);
-                        
-                        if (totalBytes != -1)
+                        var read = await contentStream.ReadAsync(buffer, 0, buffer.Length);
+                        if (read == 0)
                         {
-                            var progress = (int)((totalRead * 100) / totalBytes);
-                            OnDownloadProgress?.Invoke(progress);
+                            isMoreToRead = false;
                         }
-                    }
-                } while (isMoreToRead);
+                        else
+                        {
+                            await fileStream.WriteAsync(buffer, 0, read);
+                            totalRead += read;
+                            BandwidthTracker.AddDownloadedBytes(read);
+                            
+                            if (totalBytes != -1)
+                            {
+                                var progress = (int)((totalRead * 100) / totalBytes);
+                                OnDownloadProgress?.Invoke(progress);
+                            }
+                        }
+                    } while (isMoreToRead);
+                }
+                finally
+                {
+                    await fileStream.DisposeAsync(); // Ensure file is flushed and closed before Move
+                }
+
+                // Atomically swap tmp -> final file only after full download
+                if (File.Exists(savePath)) File.Delete(savePath);
+                File.Move(tmpPath, savePath);
 
                 OnDownloadProgress?.Invoke(100);
                 OnLog?.Invoke($"[✅] Downloaded: {relPath}");
@@ -318,6 +370,8 @@ namespace ModTogetherUniversal.Services
             }
             catch (Exception ex)
             {
+                // Clean up partial tmp file
+                try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
                 OnLog?.Invoke($"[❌] Error downloading {relPath}: {ex.Message}");
                 return false;
             }
@@ -325,20 +379,20 @@ namespace ModTogetherUniversal.Services
         
         public event Action<int>? OnUploadProgress;
 
-        public async Task UploadModAsync(string filePath, string relPath)
+        public async Task<bool> UploadModAsync(string filePath, string relPath)
         {
              try
              {
                  using var content = new MultipartFormDataContent();
                  
-                 var fileStream = File.OpenRead(filePath);
+                 // Bug #2 Fix: Use explicit `using` to guarantee FileStream is always disposed
+                 using var fileStream = File.OpenRead(filePath);
                  var fileContent = new ProgressableStreamContent(fileStream, progress =>
                  {
                      OnUploadProgress?.Invoke(progress);
                  });
                  
                  content.Add(fileContent, "file", Path.GetFileName(filePath));
-                 
                  content.Add(new StringContent(relPath), "rel_path");
                  content.Add(new StringContent(_username), "username");
 
@@ -346,10 +400,12 @@ namespace ModTogetherUniversal.Services
                  response.EnsureSuccessStatusCode();
                  
                  OnLog?.Invoke($"[✅] Uploaded {relPath}");
+                 return true;
              }
              catch (Exception ex)
              {
                  OnLog?.Invoke($"[❌] Error uploading {relPath}: {ex.Message}");
+                 return false;
              }
         }
         

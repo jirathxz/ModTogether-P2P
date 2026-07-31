@@ -235,6 +235,14 @@
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>
+
+                                <GridViewColumn Width="80" Header="Owner">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Owner}" VerticalAlignment="Center" Foreground="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=Foreground}" FontSize="11" Opacity="0.8" TextTrimming="CharacterEllipsis"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
                             </GridView>
                         </ListView.View>
                     </ListView>

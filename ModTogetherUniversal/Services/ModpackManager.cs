@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -34,7 +34,7 @@ namespace ModTogetherUniversal.Services
             
             if (Directory.Exists(stashPath) && !Directory.Exists(allModsPath))
             {
-                try { Directory.Move(stashPath, allModsPath); } catch { }
+                try { ModTogether.API.FileHelper.SafeMoveDirectory(stashPath, allModsPath); } catch { }
             }
             return allModsPath;
         }

@@ -27,7 +27,7 @@ namespace ModTogetherUniversal.Services
         public bool IsRunning => _app != null;
 
         public ConcurrentDictionary<string, UserHealthState> ActiveUsers { get; } = new();
-        public ConcurrentBag<string> KickedUsers { get; } = new();
+        public ConcurrentDictionary<string, bool> KickedUsers { get; } = new(StringComparer.OrdinalIgnoreCase);
         public ConcurrentDictionary<string, bool> BannedUsers { get; } = new();
         public ConcurrentDictionary<string, string> DeletedMods { get; } = new();
         public List<string> ChatHistory { get; } = new();
@@ -106,7 +106,7 @@ namespace ModTogetherUniversal.Services
             _app.MapPost("/heartbeat", (string username, bool? isSynced, int? syncProgress, string? currentActivity, int? pingMs) =>
             {
                 if (BannedUsers.ContainsKey(username)) return Results.Json(new { status = "banned" });
-                if (KickedUsers.Contains(username)) return Results.Json(new { status = "kicked" });
+                if (KickedUsers.ContainsKey(username)) return Results.Json(new { status = "kicked" });
                 
                 var state = ActiveUsers.GetOrAdd(username, _ => new UserHealthState());
                 state.LastSeen = DateTime.UtcNow;
@@ -123,7 +123,7 @@ namespace ModTogetherUniversal.Services
                 string target = request.Form["target"].ToString();
                 if (!string.IsNullOrEmpty(target))
                 {
-                    KickedUsers.Add(target);
+                    KickedUsers.TryAdd(target, true);
                     ActiveUsers.TryRemove(target, out _);
                     RecycleManager.Instance.HandleUserDisconnect(target, HostDir);
                     OnLog?.Invoke($"🚫 Kicked user: {target}");
@@ -137,7 +137,7 @@ namespace ModTogetherUniversal.Services
                 if (!string.IsNullOrEmpty(target))
                 {
                     BannedUsers.TryAdd(target, true);
-                    KickedUsers.Add(target);
+                    KickedUsers.TryAdd(target, true);
                     ActiveUsers.TryRemove(target, out _);
                     RecycleManager.Instance.HandleUserDisconnect(target, HostDir);
                     OnLog?.Invoke($"⛔ Banned user: {target}");
@@ -168,7 +168,12 @@ namespace ModTogetherUniversal.Services
                         var relPath = Path.GetRelativePath(HostDir, file).Replace("\\", "/");
                         if (!relPath.StartsWith(".recycle_mods") && !file.EndsWith(".tmp") && !IsDuplicateDownload(file) && IsModEnabled(relPath))
                         {
-                            mods[relPath] = new FileInfo(file).Length;
+                            try
+                            {
+                                mods[relPath] = new FileInfo(file).Length;
+                            }
+                            catch (FileNotFoundException) { }
+                            catch (IOException) { }
                         }
                     }
                 }
@@ -205,7 +210,7 @@ namespace ModTogetherUniversal.Services
                     Directory.CreateDirectory(Path.GetDirectoryName(recyclePath)!);
                     try
                     {
-                        File.Move(filePath, recyclePath, true);
+                        ModTogether.API.FileHelper.SafeMove(filePath, recyclePath, true);
                     }
                     catch { /* Ignore errors */ }
                 }
@@ -229,11 +234,27 @@ namespace ModTogetherUniversal.Services
 
                 var filePath = GetSafePath(HostDir, relPath);
                 Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+                
+                App.Client.IgnoreSyncTriggers[relPath] = DateTime.UtcNow; // Prevent FileWatcher loop
 
-                using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                int retries = 10;
+                while (retries > 0)
                 {
-                    using var trackingStream = new TrackingStream(stream, BandwidthTracker.AddDownloadedBytes);
-                    await file.CopyToAsync(trackingStream);
+                    try
+                    {
+                        using (var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                        {
+                            using var trackingStream = new TrackingStream(stream, BandwidthTracker.AddDownloadedBytes);
+                            await file.CopyToAsync(trackingStream);
+                        }
+                        break;
+                    }
+                    catch (IOException)
+                    {
+                        retries--;
+                        if (retries == 0) throw;
+                        await Task.Delay(200);
+                    }
                 }
 
                 // Remove from deleted mods if it was there

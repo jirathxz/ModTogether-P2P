@@ -52,7 +52,15 @@ namespace ModTogetherUniversal
                 }
             };
             this.Loaded += PluginsPage_Loaded;
+
+            // Bug P1 Fix: Use -= before += to prevent event handler accumulation on each page navigation
+            App.Settings.OnSettingsChanged -= ApplyTranslations;
             App.Settings.OnSettingsChanged += ApplyTranslations;
+
+            this.Unloaded += (s, e) =>
+            {
+                App.Settings.OnSettingsChanged -= ApplyTranslations;
+            };
         }
 
         private void ApplyTranslations()
@@ -99,8 +107,8 @@ namespace ModTogetherUniversal
 
                     var displayItem = new PluginDisplayItem
                     {
-                        Name = storeItem.Name,
-                        Version = storeItem.Version,
+                        Name = installedMatch != null ? installedMatch.Name : storeItem.Name,
+                        Version = installedMatch != null ? installedMatch.Version : storeItem.Version,
                         TargetGame = string.IsNullOrEmpty(storeItem.TargetGame) ? "Universal" : storeItem.TargetGame,
                         Description = storeItem.Description,
                         Author = string.IsNullOrEmpty(storeItem.Author) ? "jirathxz" : storeItem.Author,

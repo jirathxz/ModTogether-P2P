@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -704,7 +704,7 @@ namespace ModTogetherUniversal
                             try
                             {
                                 string recyclePath = Path.Combine(recycleDir, mod.Filename);
-                                File.Move(sourceFile, recyclePath, true);
+                                ModTogether.API.FileHelper.SafeMove(sourceFile, recyclePath, true);
 
                                 if (App.Server != null && App.Server.IsRunning)
                                 {
@@ -742,7 +742,7 @@ namespace ModTogetherUniversal
                             string recycleDir = Path.Combine(ModsDirectory, ".recycle_mods");
                             Directory.CreateDirectory(recycleDir);
                             string recyclePath = Path.Combine(recycleDir, mod.Filename);
-                            File.Move(sourceFile, recyclePath, true);
+                            ModTogether.API.FileHelper.SafeMove(sourceFile, recyclePath, true);
 
                             if (App.Server != null && App.Server.IsRunning)
                             {

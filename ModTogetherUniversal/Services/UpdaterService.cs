@@ -12,7 +12,7 @@ namespace ModTogetherUniversal.Services
     {
         private const string RepoOwner = "jirathxz";
         private const string RepoName = "ModTogether-P2P";
-        public const string CurrentVersion = "v1.2.0"; 
+        public const string CurrentVersion = "v1.3.5"; 
 
         public event Action<string, System.Collections.Generic.List<(string Name, string Url)>>? OnUpdateAvailable; // version, assets
         public event Action<string>? OnLog;
@@ -126,8 +126,8 @@ namespace ModTogetherUniversal.Services
 
                 // Rename current -> .old, then copy staged -> current
                 if (File.Exists(backupPath)) File.Delete(backupPath);
-                File.Move(currentExePath, backupPath);
-                File.Move(stagingPath, currentExePath);
+                ModTogether.API.FileHelper.SafeMove(currentExePath, backupPath);
+                ModTogether.API.FileHelper.SafeMove(stagingPath, currentExePath);
 
                 OnLog?.Invoke("✅ Update downloaded. Restarting application...");
 

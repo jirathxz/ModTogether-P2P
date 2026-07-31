@@ -25,6 +25,7 @@ namespace ModTogether.Plugins.MHW
         }
         public string Filename { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
+        public string Owner { get; set; } = string.Empty;
         public string DateModified { get; set; } = string.Empty;
         public DateTime DateNum { get; set; }
         public string Size { get; set; } = string.Empty;
@@ -140,6 +141,13 @@ namespace ModTogether.Plugins.MHW
             string cacheDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "GameMods");
             if (!System.IO.Directory.Exists(cacheDir)) return;
 
+            if (_watcher != null && !string.Equals(_watcher.Path, cacheDir, StringComparison.OrdinalIgnoreCase))
+            {
+                _watcher.EnableRaisingEvents = false;
+                _watcher.Dispose();
+                _watcher = null;
+            }
+
             if (_watcher == null)
             {
                 _watcher = new System.IO.FileSystemWatcher(cacheDir)
@@ -164,7 +172,7 @@ namespace ModTogether.Plugins.MHW
                 _watcher.Renamed += renamedHandler;
             }
 
-            if (App.Installer == null)
+            if (App.Installer == null || !string.Equals(App.Installer.MhwDir, App.Settings.Current.MhwDirectory, StringComparison.OrdinalIgnoreCase))
             {
                 App.Installer = new Services.ModInstaller(App.Settings.Current.MhwDirectory);
                 App.Installer.OnLog += msg => Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log(msg));
@@ -407,7 +415,7 @@ namespace ModTogether.Plugins.MHW
 
             var processedNames = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase);
             
-            if (App.Installer == null)
+            if (App.Installer == null || !string.Equals(App.Installer.MhwDir, mhwDir, StringComparison.OrdinalIgnoreCase))
             {
                 App.Installer = new Services.ModInstaller(mhwDir);
                 App.Installer.OnLog += msg => Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log(msg));
@@ -423,6 +431,39 @@ namespace ModTogether.Plugins.MHW
             {
                 foreach (var p in paths) installedFiles.Add(p);
             }
+
+            // Read owner metadata
+            var ownerMap = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                string ownersFile = System.IO.Path.Combine(docsPath, "ModTogether", "mod_owners.json");
+                if (System.IO.File.Exists(ownersFile))
+                {
+                    string json = System.IO.File.ReadAllText(ownersFile);
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    foreach (var element in doc.RootElement.EnumerateArray())
+                    {
+                        if (element.TryGetProperty("RelativePath", out var pathProp) && 
+                            element.TryGetProperty("Owners", out var ownersProp))
+                        {
+                            string relPath = pathProp.GetString() ?? "";
+                            var ownersList = new System.Collections.Generic.List<string>();
+                            foreach (var ownerElem in ownersProp.EnumerateArray())
+                            {
+                                string? ownerStr = ownerElem.GetString();
+                                if (!string.IsNullOrEmpty(ownerStr)) ownersList.Add(ownerStr);
+                            }
+                            
+                            string badge = "Local";
+                            if (ownersList.Count == 1) badge = $"👤 {ownersList[0]}";
+                            else if (ownersList.Count > 1) badge = $"👥 Shared ({string.Join(", ", ownersList)})";
+                            
+                            ownerMap[relPath] = badge;
+                        }
+                    }
+                }
+            }
+            catch { }
 
             foreach (var file in allFiles)
             {
@@ -461,10 +502,25 @@ namespace ModTogether.Plugins.MHW
 
                         var fileInfo = new System.IO.FileInfo(file);
                         
+                        string owner = "Local";
+                        if (ownerMap.TryGetValue(filename, out string? mappedOwner))
+                        {
+                            owner = mappedOwner;
+                        }
+                        else if (filename.StartsWith("[") && filename.Contains("] "))
+                        {
+                            int endBracket = filename.IndexOf("] ");
+                            if (endBracket > 1)
+                            {
+                                owner = filename.Substring(1, endBracket - 1);
+                            }
+                        }
+                        
                         var item = new ModItemData
                         {
                             Filename = filename,
                             DisplayName = filename + (isInstalled ? " [Installed]" : ""),
+                            Owner = owner,
                             DateModified = fileInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm"),
                             DateNum = fileInfo.LastWriteTime,
                             Size = (fileInfo.Length / 1024.0 / 1024.0).ToString("0.00") + " MB",
@@ -529,21 +585,21 @@ namespace ModTogether.Plugins.MHW
         private void BtnBackup_Click(object sender, RoutedEventArgs e)
         {
             if (MainWindow.Instance != null && !MainWindow.Instance.ValidateGamePath()) return;
-            string nativePc = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "nativePC");
-            if (!System.IO.Directory.Exists(nativePc))
+            string gamemods = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, "gamemods");
+            if (!System.IO.Directory.Exists(gamemods))
             {
-                MainWindow.Instance?.Log("⚠️ nativePC folder not found. Install mods first.");
+                MainWindow.Instance?.Log("⚠️ gamemods folder not found. Install mods first.");
                 return;
             }
             
-            string backupDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, $"nativePC_backup_{DateTime.Now:yyyyMMdd_HHmmss}");
-            MainWindow.Instance?.Log($"⏳ Backing up nativePC to {System.IO.Path.GetFileName(backupDir)}...");
+            string backupDir = System.IO.Path.Combine(App.Settings.Current.MhwDirectory, $"gamemods_backup_{DateTime.Now:yyyyMMdd_HHmmss}");
+            MainWindow.Instance?.Log($"⏳ Backing up gamemods to {System.IO.Path.GetFileName(backupDir)}...");
             
             System.Threading.Tasks.Task.Run(() => 
             {
                 try
                 {
-                    CopyDirectory(nativePc, backupDir);
+                    CopyDirectory(gamemods, backupDir);
                     Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log($"✅ Backup complete: {System.IO.Path.GetFileName(backupDir)}"));
                 }
                 catch (Exception ex)
@@ -875,7 +931,7 @@ namespace ModTogether.Plugins.MHW
                         System.IO.Directory.CreateDirectory(recycleDir);
                         try
                         {
-                            System.IO.File.Move(fullPath, System.IO.Path.Combine(recycleDir, filename), true);
+                            ModTogether.API.FileHelper.SafeMove(fullPath, System.IO.Path.Combine(recycleDir, filename), true);
                             Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log($"🗑️ Mod moved to recycle bin: {filename}"));
                             
                             if (App.Server != null && App.Server.IsRunning)
@@ -1011,7 +1067,7 @@ namespace ModTogether.Plugins.MHW
                         System.IO.Directory.CreateDirectory(recycleDir);
                         try
                         {
-                            System.IO.File.Move(fullPath, System.IO.Path.Combine(recycleDir, filename), true);
+                            ModTogether.API.FileHelper.SafeMove(fullPath, System.IO.Path.Combine(recycleDir, filename), true);
                             Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log($"🗑️ Mod moved to recycle bin: {filename}"));
                             
                             if (App.Server != null && App.Server.IsRunning)
@@ -1150,7 +1206,7 @@ namespace ModTogether.Plugins.MHW
                             string recycleDir = System.IO.Path.Combine(cacheDir, ".recycle_mods");
                             System.IO.Directory.CreateDirectory(recycleDir);
                             string recyclePath = System.IO.Path.Combine(recycleDir, mod.Filename);
-                            System.IO.File.Move(sourceFile, recyclePath, true);
+                            ModTogether.API.FileHelper.SafeMove(sourceFile, recyclePath, true);
                             
                             if (App.Server != null && App.Server.IsRunning)
                             {

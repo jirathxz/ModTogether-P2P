@@ -106,7 +106,8 @@ namespace ModTogetherUniversal.Services
                 MainWindow.Instance?.Log($"⚠️ GitHub Release API query warning: {ex.Message}");
             }
 
-            // Verify local installation state and SHA-256 for all items
+            // Check local installation state for all items.
+            // Bug P6 Fix: GitHub Releases API does not expose SHA-256; compare by version tag instead.
             foreach (var item in items)
             {
                 string localFile = Path.Combine(pluginsDir, item.DllFileName);
@@ -114,7 +115,16 @@ namespace ModTogetherUniversal.Services
                 {
                     item.IsInstalled = true;
                     item.LocalSha256 = ComputeSha256(localFile);
-                    item.IsUpdateAvailable = !string.IsNullOrEmpty(item.Sha256) && item.LocalSha256 != item.Sha256;
+                    // Check update by comparing version tag against what the loaded plugin reports
+                    var loadedPlugin = PluginManager.Instance.LoadedPlugins
+                        .FirstOrDefault(p => p.Name.Equals(item.Name, StringComparison.OrdinalIgnoreCase)
+                                          || p.TargetGame.Equals(item.TargetGame, StringComparison.OrdinalIgnoreCase));
+                    string localVersion = loadedPlugin?.Version ?? "";
+                    string remoteTag = item.Version.TrimStart('v', 'V');
+                    string localTag = localVersion.TrimStart('v', 'V');
+                    item.IsUpdateAvailable = !string.IsNullOrEmpty(remoteTag)
+                        && !string.IsNullOrEmpty(localTag)
+                        && remoteTag != localTag;
                 }
                 else
                 {
@@ -156,6 +166,13 @@ namespace ModTogetherUniversal.Services
                     return (false, "Downloaded file was empty (0 bytes).");
                 }
 
+                // Bug P2 Fix: Run security scan on downloaded bytes BEFORE writing to disk
+                if (!PluginManager.Instance.InspectPluginSecurity(item.DllFileName, bytes, out string dangerReason))
+                {
+                    MainWindow.Instance?.Log($"🛡️ [SECURITY BLOCK] Downloaded plugin '{item.DllFileName}' BLOCKED: {dangerReason}");
+                    return (false, $"Security scan failed: {dangerReason}");
+                }
+
                 await File.WriteAllBytesAsync(targetFile, bytes);
                 string installedSha = ComputeSha256(targetFile);
 
@@ -184,19 +201,20 @@ namespace ModTogetherUniversal.Services
 
         private string DeduceGameName(string filename)
         {
-            if (filename.Contains("MHWs", StringComparison.OrdinalIgnoreCase)) return "Monster Hunter Wilds";
+            // Bug P7 Fix: Check longer/more specific names first to avoid substring collisions
+            if (filename.Contains("MHWilds", StringComparison.OrdinalIgnoreCase)) return "Monster Hunter Wilds";
             if (filename.Contains("MHW", StringComparison.OrdinalIgnoreCase)) return "Monster Hunter: World";
             if (filename.Contains("Elden", StringComparison.OrdinalIgnoreCase)) return "Elden Ring";
-            if (filename.Contains("Pal", StringComparison.OrdinalIgnoreCase)) return "Palworld";
+            if (filename.Contains("Palworld", StringComparison.OrdinalIgnoreCase)) return "Palworld";
             return "Universal Game";
         }
 
         private string DeduceGameId(string filename)
         {
-            if (filename.Contains("MHWs", StringComparison.OrdinalIgnoreCase)) return "MHWs";
+            if (filename.Contains("MHWilds", StringComparison.OrdinalIgnoreCase)) return "MHWilds";
             if (filename.Contains("MHW", StringComparison.OrdinalIgnoreCase)) return "MHW";
             if (filename.Contains("Elden", StringComparison.OrdinalIgnoreCase)) return "EldenRing";
-            if (filename.Contains("Pal", StringComparison.OrdinalIgnoreCase)) return "Palworld";
+            if (filename.Contains("Palworld", StringComparison.OrdinalIgnoreCase)) return "Palworld";
             return Path.GetFileNameWithoutExtension(filename);
         }
 

@@ -7,7 +7,7 @@ namespace ModTogether.Tests
 {
     public static class TestMhWildsPakInstaller
     {
-        public static void RunTest()
+        public static bool RunTest()
         {
             Console.WriteLine("=========================================================");
             Console.WriteLine(" [TEST] MH Wilds RE Engine PAK Installer Verification");
@@ -158,6 +158,7 @@ namespace ModTogether.Tests
             Console.WriteLine("\n=========================================================");
             Console.WriteLine(allPassed ? " ✅ ALL MH WILDS INSTALLER TESTS PASSED SUCCESSFULLY! " : " ❌ SOME TESTS FAILED! ");
             Console.WriteLine("=========================================================");
+            return allPassed;
         }
     }
 }

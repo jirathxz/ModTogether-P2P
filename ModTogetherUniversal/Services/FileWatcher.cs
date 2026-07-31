@@ -131,6 +131,13 @@ namespace ModTogetherUniversal.Services
             if (fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) return true;
             if (Regex.IsMatch(fileName, @" \(\d+\)(\.[a-zA-Z0-9]+)?$")) return true; // Duplicate download
 
+            string relPath = Path.GetRelativePath(_localDir, filePath).Replace("\\", "/");
+            if (_client.IgnoreSyncTriggers.TryGetValue(relPath, out var time))
+            {
+                if ((DateTime.UtcNow - time).TotalSeconds < 5) return true;
+                _client.IgnoreSyncTriggers.TryRemove(relPath, out _);
+            }
+
             return !(fileName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
                      fileName.EndsWith(".7z", StringComparison.OrdinalIgnoreCase) ||
                      fileName.EndsWith(".rar", StringComparison.OrdinalIgnoreCase));

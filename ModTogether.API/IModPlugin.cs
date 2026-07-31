@@ -13,7 +13,7 @@ namespace ModTogether.API
         
         void Initialize(string gameDirectory);
         void SetLanguage(string language);
-        Page CreatePage();
+        Page? CreatePage(); // Nullable: proxy implementations may return null if method is missing
         bool IsValidGameDirectory(string gameDirectory);
     }
 }

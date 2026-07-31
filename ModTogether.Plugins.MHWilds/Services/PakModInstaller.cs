@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -296,7 +296,7 @@ namespace ModTogether.Plugins.MHWilds.Services
                     
                     try 
                     {
-                        File.Move(pf.Path, newPath);
+                        ModTogether.API.FileHelper.SafeMove(pf.Path, newPath);
                         OnLog?.Invoke($"[DEBUG] Re-sequenced gap: Renamed '{oldName}' -> '{newName}'");
                         
                         foreach (var kvp in _state.InstalledMods)
@@ -371,7 +371,7 @@ namespace ModTogether.Plugins.MHWilds.Services
                 string tempPath = Path.Combine(_mhwDir, tempName);
                 if (File.Exists(oldPath))
                 {
-                    File.Move(oldPath, tempPath);
+                    ModTogether.API.FileHelper.SafeMove(oldPath, tempPath);
                     tempCurrentFiles.Add(tempName);
                 }
             }
@@ -384,7 +384,7 @@ namespace ModTogether.Plugins.MHWilds.Services
                 string newPath = Path.Combine(_mhwDir, currentFiles[i]);
                 if (File.Exists(targetPath))
                 {
-                    File.Move(targetPath, newPath);
+                    ModTogether.API.FileHelper.SafeMove(targetPath, newPath);
                     newTargetFiles.Add(currentFiles[i]);
                 }
             }
@@ -397,7 +397,7 @@ namespace ModTogether.Plugins.MHWilds.Services
                 string newPath = Path.Combine(_mhwDir, targetFiles[i]);
                 if (File.Exists(tempPath))
                 {
-                    File.Move(tempPath, newPath);
+                    ModTogether.API.FileHelper.SafeMove(tempPath, newPath);
                     newCurrentFiles.Add(targetFiles[i]);
                 }
             }

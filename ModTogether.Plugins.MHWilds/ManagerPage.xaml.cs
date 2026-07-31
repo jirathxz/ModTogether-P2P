@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Collections.ObjectModel;
@@ -828,11 +828,11 @@ namespace ModTogether.Plugins.MHWilds
                     if (System.IO.Directory.Exists(fullPath))
                     {
                         if (System.IO.Directory.Exists(recyclePath)) System.IO.Directory.Delete(recyclePath, true);
-                        System.IO.Directory.Move(fullPath, recyclePath);
+                        ModTogether.API.FileHelper.SafeMoveDirectory(fullPath, recyclePath);
                     }
                     else if (System.IO.File.Exists(fullPath))
                     {
-                        System.IO.File.Move(fullPath, recyclePath, true);
+                        ModTogether.API.FileHelper.SafeMove(fullPath, recyclePath, true);
                     }
                     MainWindow.Instance?.Log($"🗑️ Mod moved to recycle bin: {item.Filename}");
                 }
@@ -1207,11 +1207,11 @@ namespace ModTogether.Plugins.MHWilds
                     if (System.IO.Directory.Exists(fullPath))
                     {
                         if (System.IO.Directory.Exists(recyclePath)) System.IO.Directory.Delete(recyclePath, true);
-                        System.IO.Directory.Move(fullPath, recyclePath);
+                        ModTogether.API.FileHelper.SafeMoveDirectory(fullPath, recyclePath);
                     }
                     else if (System.IO.File.Exists(fullPath))
                     {
-                        System.IO.File.Move(fullPath, recyclePath, true);
+                        ModTogether.API.FileHelper.SafeMove(fullPath, recyclePath, true);
                     }
                     MainWindow.Instance?.Log($"🗑️ Mod moved to recycle bin: {filename}");
                 } 

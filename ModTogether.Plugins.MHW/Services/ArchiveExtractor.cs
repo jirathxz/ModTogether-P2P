@@ -223,7 +223,7 @@ namespace ModTogether.Plugins.MHW.Services
 
         private static List<string> ExtractUsing7Zip(string exePath, string archivePath, string destinationDirectory, Action<double>? progressCallback)
         {
-            var p = new Process();
+            using var p = new Process();
             p.StartInfo.FileName = exePath;
             p.StartInfo.Arguments = $"x -scsUTF-8 \"{archivePath}\" -o\"{destinationDirectory}\" -y -bsp1";
             p.StartInfo.UseShellExecute = false;
@@ -254,7 +254,7 @@ namespace ModTogether.Plugins.MHW.Services
 
         private static List<string> ExtractUsingWinRAR(string exePath, string archivePath, string destinationDirectory, Action<double>? progressCallback)
         {
-            var p = new Process();
+            using var p = new Process();
             p.StartInfo.FileName = exePath;
             p.StartInfo.Arguments = $"x -y \"{archivePath}\" * \"{destinationDirectory}\\\"";
             p.StartInfo.UseShellExecute = false;
@@ -372,7 +372,7 @@ namespace ModTogether.Plugins.MHW.Services
         private static List<string> GetContentsUsing7Zip(string exePath, string archivePath)
         {
             var contents = new List<string>();
-            var p = new Process();
+            using var p = new Process();
             p.StartInfo.FileName = exePath;
             p.StartInfo.Arguments = $"l -slt -scsUTF-8 \"{archivePath}\"";
             p.StartInfo.UseShellExecute = false;
@@ -432,7 +432,7 @@ namespace ModTogether.Plugins.MHW.Services
         private static List<string> GetContentsUsingWinRAR(string exePath, string archivePath)
         {
             var contents = new List<string>();
-            var p = new Process();
+            using var p = new Process();
             p.StartInfo.FileName = exePath;
             p.StartInfo.Arguments = $"lb \"{archivePath}\"";
             p.StartInfo.UseShellExecute = false;

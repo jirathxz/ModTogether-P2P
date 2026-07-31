@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -159,7 +159,7 @@ namespace ModTogetherUniversal.Services
                             Directory.CreateDirectory(Path.GetDirectoryName(targetRecyclePath)!);
                             
                             if (File.Exists(targetRecyclePath)) File.Delete(targetRecyclePath);
-                            File.Move(activeFile, targetRecyclePath);
+                            ModTogether.API.FileHelper.SafeMove(activeFile, targetRecyclePath);
                             recycledCount++;
                         }
                         catch { }

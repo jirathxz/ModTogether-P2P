@@ -162,7 +162,7 @@
                         <ui:Button Grid.Row="0" Grid.Column="2" Content="Send" Icon="{ui:SymbolIcon Send24}" x:Name="BtnSendChat" Click="BtnSendChat_Click" Appearance="Primary" />
 
                         <TextBlock Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="0,8,0,0">
-                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.2.0 - by jirathxz</Hyperlink>
+                            <Hyperlink NavigateUri="https://github.com/jirathxz/ModTogether-P2P">ModTogether v1.3.5 - by jirathxz</Hyperlink>
                         </TextBlock>
                     </Grid>
                 </StackPanel>

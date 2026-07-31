@@ -34,6 +34,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo [+] Restore completed successfully.
 
+
 :: Step 2: Build Lightweight
 echo.
 echo [*] [2/3] Building Lightweight Edition (Requires .NET 8, ~10MB)...

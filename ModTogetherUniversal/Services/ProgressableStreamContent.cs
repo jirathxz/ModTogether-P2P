@@ -47,10 +47,9 @@ namespace ModTogetherUniversal.Services
 
         protected override void Dispose(bool disposing)
         {
-            if (disposing)
-            {
-                _content.Dispose();
-            }
+            // Bug E Fix: Do NOT dispose _content here.
+            // The caller (UploadModAsync) owns the stream via `using var fileStream`
+            // and is responsible for its lifetime. Double-disposing causes ObjectDisposedException.
             base.Dispose(disposing);
         }
     }

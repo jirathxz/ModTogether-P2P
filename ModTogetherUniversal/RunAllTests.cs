@@ -7,7 +7,7 @@ namespace ModTogetherUniversal
 {
     public static class RunAllTests
     {
-        public static async Task RunVerificationAsync()
+        public static async Task<bool> RunVerificationAsync()
         {
             Console.WriteLine("=================================================");
             Console.WriteLine(" 🧪 MODTOGETHER UNIVERSAL SYSTEM VERIFICATION ");
@@ -72,8 +72,9 @@ namespace ModTogetherUniversal
             Console.WriteLine(test4Passed ? "  ✅ [PASS] AppSettings & Game Profiles verified." : "  ❌ [FAIL] AppSettings failed.");
 
             Console.WriteLine("\n=================================================");
-            Console.WriteLine(" 🎉 ALL SYSTEM VERIFICATION TESTS COMPLETED ");
+            Console.WriteLine(test1Passed && test4Passed ? " 🎉 ALL SYSTEM VERIFICATION TESTS COMPLETED " : " ❌ SOME SYSTEM VERIFICATION TESTS FAILED ");
             Console.WriteLine("=================================================");
+            return test1Passed && test4Passed;
         }
     }
 }

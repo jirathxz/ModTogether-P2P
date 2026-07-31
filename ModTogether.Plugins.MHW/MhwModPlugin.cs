@@ -205,7 +205,7 @@ namespace ModTogether.Plugins.MHW
                         {"btn_delete_all_permanently", "Delete Checked Permanently"},
                         
                         {"btn_validate", "Validate"},
-                        {"btn_backup", "Backup nativePC"},
+                        {"btn_backup", "Backup gamemods"},
                         
                         {"btn_install_checked", "Install Checked"},
                         {"btn_uninstall_checked", "Uninstall Checked"},
@@ -262,7 +262,7 @@ namespace ModTogether.Plugins.MHW
     {
         public string Name => "MHW Mod Manager";
         public string TargetGame => "Monster Hunter: World";
-        public string Version => "1.2.0";
+        public string Version => "1.3.5";
         public string Description => "A powerful mod manager for Monster Hunter: World";
         public string Author => "jirathxz";
         public string NavigationIcon => "Games24";
@@ -278,7 +278,7 @@ namespace ModTogether.Plugins.MHW
             Models.I18N.OnLanguageChanged?.Invoke();
         }
 
-        public Page CreatePage()
+        public Page? CreatePage()
         {
             return new ManagerPage();
         }

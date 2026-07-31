@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Text;
 using System.Windows;
+using ModTogetherUniversal.Models;
 using Wpf.Ui.Controls;
 
 namespace ModTogetherUniversal
@@ -70,6 +72,42 @@ namespace ModTogetherUniversal
             if (App.Client != null)
             {
                 App.Client.OnLog += msg => Dispatcher.Invoke(() => Log(msg));
+                App.Client.OnUsersUpdate += users => 
+                {
+                    Dispatcher.Invoke(() => 
+                    {
+                        if (UserList != null)
+                        {
+                            UserList.Items.Clear();
+                            var viewModels = users.Select(u => new UserSyncViewModel
+                            {
+                                Username = u.Username,
+                                IsSynced = u.IsSynced,
+                                SyncProgress = u.SyncProgress,
+                                CurrentActivity = !string.IsNullOrEmpty(u.CurrentActivity) 
+                                    ? u.CurrentActivity 
+                                    : (u.IsSynced ? "🟢 Ready" : $"⚡ Syncing {u.SyncProgress}%"),
+                                PingMs = u.PingMs
+                            }).ToList();
+                            
+                            foreach (var u in viewModels) UserList.Items.Add(u);
+                            int syncedCount = viewModels.Count(u => u.IsSynced);
+                            LblUsers.Text = $"Party Readiness: {syncedCount}/{viewModels.Count} Ready";
+                            UserList.Visibility = Visibility.Visible;
+                        }
+                    });
+                };
+                App.Client.OnKicked += () => 
+                {
+                    Dispatcher.Invoke(() => 
+                    {
+                        App.Client.StopBackgroundTasks();
+                        Log("🚫 You have been disconnected from the session.");
+                        if (BtnDisconnect != null) BtnDisconnect.IsEnabled = false;
+                        if (UserList != null) UserList.Visibility = Visibility.Collapsed;
+                        if (LblUsers != null) LblUsers.Text = "Connected Users: -";
+                    });
+                };
             }
             
             App.Updater.OnUpdateAvailable += (version, assets) => 
@@ -134,19 +172,6 @@ namespace ModTogetherUniversal
                 Dispatcher.Invoke(() => 
                 {
                     ValidateGamePath();
-                });
-                
-                // Dump visual tree after 5 seconds to debug layout
-                _ = Dispatcher.InvokeAsync(async () => 
-                {
-                    await System.Threading.Tasks.Task.Delay(5000);
-                    try {
-                        var logPath = @"C:\Users\jirathx\Desktop\ModTogether\visual_tree.txt";
-                        using (var writer = new System.IO.StreamWriter(logPath))
-                        {
-                            DumpVisualTree(this, 0, writer);
-                        }
-                    } catch { }
                 });
             });
         }
@@ -453,9 +478,6 @@ namespace ModTogetherUniversal
                 {
                     bool isMatch = Services.PluginManager.Instance.IsPluginForGame(ext, gameDir);
 
-                    // Initialize with current game dir (empty string if not set)
-                    ext.Initialize(gameDir);
-
                     System.Windows.Controls.Page? pageInstance = null;
                     try { pageInstance = ext.CreatePage(); } catch (Exception ex) { Log($"Failed to create page for {ext.Name}: {ex.Message}\n{ex.StackTrace}"); }
                     if (pageInstance == null) continue;
@@ -478,6 +500,8 @@ namespace ModTogetherUniversal
 
                     if (isMatch)
                     {
+                        // Bug P4 Fix: Only Initialize() when the plugin actually matches the current game
+                        ext.Initialize(gameDir);
                         navItem.IsEnabled = true;
                         RootNavigation.MenuItems.Add(navItem);
                     }

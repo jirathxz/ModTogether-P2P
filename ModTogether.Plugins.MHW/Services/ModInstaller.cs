@@ -13,6 +13,7 @@ namespace ModTogether.Plugins.MHW.Services
         private readonly string _stateFile;
         private ModState _state;
         public ModState State => _state;
+        public string MhwDir => _mhwDir;
 
         public event Action<string>? OnLog;
         public event Action<double>? OnInstallProgress;

@@ -14,9 +14,16 @@ namespace ModTogetherUniversal
         private bool _isHosting = false;
         private System.Threading.CancellationTokenSource? _statusMonitorCancellation;
 
+        // Bug A & B Fix: Store delegates so we can properly remove them (prevent event handler leaks)
+        private readonly Action _settingsChangedHandler;
+        private readonly Action<string> _serverLogHandler;
+
         public RoomPage()
         {
             InitializeComponent();
+            // Initialize delegates once so += and -= refer to the same instance
+            _settingsChangedHandler = () => Dispatcher.Invoke(ApplyTranslations);
+            _serverLogHandler = msg => MainWindow.Instance?.Log(msg);
             ApplyTranslations();
 
             Loaded += (_, _) => 
@@ -35,6 +42,13 @@ namespace ModTogetherUniversal
                 else if (App.Client != null && App.Client.IsConnected)
                 {
                     ShowActiveState("CONNECTED TO LOBBY", App.Client.Token, App.Client.ServerIp + ":" + App.Client.ServerPort);
+                    
+                    App.Client.OnUsersUpdate -= Client_OnUsersUpdate;
+                    App.Client.OnUsersUpdate += Client_OnUsersUpdate;
+                    App.Client.OnKicked -= Client_OnKicked;
+                    App.Client.OnKicked += Client_OnKicked;
+                    
+                    Client_OnUsersUpdate(App.Client.LastKnownUsers);
                 }
                 else
                 {
@@ -43,12 +57,18 @@ namespace ModTogetherUniversal
 
                 StartStatusMonitor();
             };
-            Unloaded += (_, _) => StopStatusMonitor();
-
-            App.Settings.OnSettingsChanged += () =>
+            Unloaded += (_, _) => 
             {
-                Dispatcher.Invoke(ApplyTranslations);
+                StopStatusMonitor();
+                if (App.Client != null)
+                {
+                    App.Client.OnUsersUpdate -= Client_OnUsersUpdate;
+                    App.Client.OnKicked -= Client_OnKicked;
+                }
             };
+
+            App.Settings.OnSettingsChanged -= _settingsChangedHandler;
+            App.Settings.OnSettingsChanged += _settingsChangedHandler;
 
         }
 
@@ -315,7 +335,8 @@ namespace ModTogetherUniversal
 
                 MainWindow.Instance?.Log($"Starting Host Server on Port {port}...");
 
-                App.Server.OnLog += msg => MainWindow.Instance?.Log(msg);
+                App.Server.OnLog -= _serverLogHandler; // Remove any previous handler first (Bug A fix)
+                App.Server.OnLog += _serverLogHandler;
 
                 string hostDir = App.Settings.Current.GameDirectory;
                 if (string.IsNullOrEmpty(hostDir)) hostDir = System.AppDomain.CurrentDomain.BaseDirectory;
@@ -324,6 +345,7 @@ namespace ModTogetherUniversal
 
                 App.Server.SetEnabledMods(null);
                 await App.Server.StartAsync(cacheDir, port, token);
+                App.Client.Configure("127.0.0.1", port, token, Environment.UserName);
                 App.Watcher.Start(cacheDir);
 
                 string username = Environment.UserName;
@@ -375,11 +397,61 @@ namespace ModTogetherUniversal
 
         private void BtnCopyIp_Click(object sender, RoutedEventArgs e)
         {
-            if (LblActiveIp != null && !string.IsNullOrEmpty(LblActiveIp.Text))
+            if (!_isHosting)
             {
-                Clipboard.SetText(LblActiveIp.Text);
-                MainWindow.Instance?.Log($"📋 Copied IP: {LblActiveIp.Text}");
+                if (LblActiveIp != null && !string.IsNullOrEmpty(LblActiveIp.Text))
+                {
+                    Clipboard.SetText(LblActiveIp.Text);
+                    MainWindow.Instance?.Log($"📋 Copied Host IP: {LblActiveIp.Text}");
+                }
+                return;
             }
+
+            if (!(sender is FrameworkElement btn)) return;
+
+            var menu = new ContextMenu();
+            var interfaces = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+            int port = App.Server?.Port ?? 52100;
+
+            foreach (var ni in interfaces)
+            {
+                if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
+                if (ni.NetworkInterfaceType == System.Net.NetworkInformation.NetworkInterfaceType.Loopback) continue;
+
+                var ipProps = ni.GetIPProperties();
+                foreach (var addr in ipProps.UnicastAddresses)
+                {
+                    if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                    {
+                        string ip = addr.Address.ToString();
+                        string label = GetInterfaceLabel(ni, ip);
+                        string fullIp = $"{ip}:{port}";
+                        
+                        var item = new MenuItem { Header = $"{label} ({fullIp})" };
+                        item.Click += (s, ev) => 
+                        {
+                            Clipboard.SetText(fullIp);
+                            MainWindow.Instance?.Log($"📋 Copied {label} IP: {fullIp}");
+                            if (LblActiveIp != null) LblActiveIp.Text = fullIp;
+                        };
+                        menu.Items.Add(item);
+                    }
+                }
+            }
+
+            if (menu.Items.Count == 0)
+            {
+                if (LblActiveIp != null && !string.IsNullOrEmpty(LblActiveIp.Text))
+                {
+                    Clipboard.SetText(LblActiveIp.Text);
+                    MainWindow.Instance?.Log($"📋 Copied IP: {LblActiveIp.Text}");
+                }
+                return;
+            }
+
+            menu.PlacementTarget = btn;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true;
         }
 
         private void BtnCopyPin_Click(object sender, RoutedEventArgs e)
@@ -473,18 +545,6 @@ namespace ModTogetherUniversal
                     ListSessionMembers.ItemsSource = viewModels;
                     LblSessionSummary.Text = $"({users.Count} Connected)";
                 }
-
-                if (MainWindow.Instance != null && MainWindow.Instance.UserList != null)
-                {
-                    MainWindow.Instance.UserList.Items.Clear();
-                    foreach (var u in users)
-                    {
-                        MainWindow.Instance.UserList.Items.Add(u);
-                    }
-                    int syncedCount = users.Count(u => u.IsSynced);
-                    MainWindow.Instance.LblUsers.Text = $"Party Readiness: {syncedCount}/{users.Count} Ready";
-                    MainWindow.Instance.UserList.Visibility = Visibility.Visible;
-                }
             });
         }
 
@@ -492,14 +552,6 @@ namespace ModTogetherUniversal
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
-                App.Client.StopBackgroundTasks();
-                MainWindow.Instance?.Log("🚫 You have been disconnected from the session.");
-                if (MainWindow.Instance != null && MainWindow.Instance.BtnDisconnect != null)
-                {
-                    MainWindow.Instance.BtnDisconnect.IsEnabled = false;
-                    MainWindow.Instance.UserList.Visibility = Visibility.Collapsed;
-                    MainWindow.Instance.LblUsers.Text = "Connected Users: -";
-                }
                 ResetSessionDashboard();
                 ShowIdleState();
             });
@@ -540,6 +592,18 @@ namespace ModTogetherUniversal
         {
             ListSessionMembers.ItemsSource = null;
             if (LblSessionSummary != null) LblSessionSummary.Text = "(0 Connected)";
+            
+            if (MainWindow.Instance != null)
+            {
+                if (MainWindow.Instance.UserList != null)
+                {
+                    MainWindow.Instance.UserList.Items.Clear();
+                }
+                if (MainWindow.Instance.LblUsers != null)
+                {
+                    MainWindow.Instance.LblUsers.Text = Models.I18N.GetString("lbl_users", App.Settings.Current.Language);
+                }
+            }
         }
 
         private async void BtnScan_Click(object sender, RoutedEventArgs e)
@@ -623,7 +687,7 @@ namespace ModTogetherUniversal
                     return;
                 }
 
-                App.Server.KickedUsers.Add(username);
+                App.Server.KickedUsers.TryAdd(username, true);
                 App.Server.ActiveUsers.TryRemove(username, out _);
                 MainWindow.Instance?.Log($"🚫 Kicked user: {username}");
             }

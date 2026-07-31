@@ -8,7 +8,7 @@ namespace ModTogether.Tests
 {
     public static class TestMhwModInstaller
     {
-        public static void RunTest()
+        public static bool RunTest()
         {
             Console.WriteLine("=========================================================");
             Console.WriteLine(" [TEST] MHW Mod Installer & Progress Event Verification");
@@ -49,12 +49,23 @@ namespace ModTogether.Tests
             Console.WriteLine($"[CHECKLIST 3] OnInstallProgress fired 0%: {(hasStartProgress ? "PASSED ✅" : "FAILED ❌")}");
             Console.WriteLine($"[CHECKLIST 4] OnInstallProgress fired 100%: {(hasEndProgress ? "PASSED ✅" : "FAILED ❌")}");
 
+            // Test Uninstallation
+            Console.WriteLine("\n[ACTION] Testing Uninstallation...");
+            installer.UninstallMod("test_mhw_mod.zip");
+
+            bool isInstalledAfterUninstall = installer.IsModInstalled("test_mhw_mod.zip");
+            bool destFileExistsAfterUninstall = File.Exists(Path.Combine(mockGameDir, "nativePC", "sound", "weapon", "test.nbnw"));
+
+            Console.WriteLine($"[CHECKLIST 5] Mod unregistered from installed_mods.json: {(!isInstalledAfterUninstall ? "PASSED ✅" : "FAILED ❌")}");
+            Console.WriteLine($"[CHECKLIST 6] File removed from nativePC: {(!destFileExistsAfterUninstall ? "PASSED ✅" : "FAILED ❌")}");
+
             try { Directory.Delete(testRoot, true); } catch { }
 
-            bool passed = isInstalled && destFileExists && hasStartProgress && hasEndProgress;
+            bool passed = isInstalled && destFileExists && hasStartProgress && hasEndProgress && !isInstalledAfterUninstall && !destFileExistsAfterUninstall;
             Console.WriteLine("\n=========================================================");
             Console.WriteLine(passed ? " ✅ ALL MHW INSTALLER PROGRESS TESTS PASSED! " : " ❌ MHW INSTALLER TEST FAILED! ");
             Console.WriteLine("=========================================================");
+            return passed;
         }
     }
 }

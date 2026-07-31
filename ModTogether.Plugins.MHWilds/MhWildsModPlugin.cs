@@ -283,7 +283,7 @@ namespace ModTogether.Plugins.MHWilds
             Models.I18N.OnLanguageChanged?.Invoke();
         }
 
-        public Page CreatePage()
+        public Page? CreatePage()
         {
             return new ManagerPage();
         }

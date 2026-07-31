@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -142,7 +142,7 @@ namespace ModTogetherUniversal
                     {
                         try
                         {
-                            File.Move(recyclePath, targetPath, true);
+                            ModTogether.API.FileHelper.SafeMove(recyclePath, targetPath, true);
                             Application.Current.Dispatcher.Invoke(() => MainWindow.Instance?.Log($"♻️ Restored mod: {mod.Filename}"));
                             
                             // Trigger P2P sync for room

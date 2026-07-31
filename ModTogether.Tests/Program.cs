@@ -8,11 +8,19 @@ namespace ModTogether.Tests
     {
         static async Task Main(string[] args)
         {
-            await RunAllTests.RunVerificationAsync();
+            bool success = true;
+            success &= await RunAllTests.RunVerificationAsync();
             Console.WriteLine();
-            TestMhWildsPakInstaller.RunTest();
+            success &= TestMhWildsPakInstaller.RunTest();
             Console.WriteLine();
-            TestMhwModInstaller.RunTest();
+            success &= TestMhwModInstaller.RunTest();
+            Console.WriteLine();
+            success &= TestFileHelperBug.RunTest();
+
+            if (!success)
+            {
+                Environment.Exit(1);
+            }
         }
     }
 }

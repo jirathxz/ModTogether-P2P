@@ -65,6 +65,12 @@ namespace ModTogetherUniversal
                                 BtnCopyPin.Visibility = Visibility.Collapsed;
                                 LblHostPin.Text = Models.I18N.GetString("host_pin", App.Settings.Current.Language);
                                 LblHostPin.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(160, 160, 160));
+                                
+                                if (MainWindow.Instance != null)
+                                {
+                                    if (MainWindow.Instance.UserList != null) MainWindow.Instance.UserList.Items.Clear();
+                                    if (MainWindow.Instance.LblUsers != null) MainWindow.Instance.LblUsers.Text = Models.I18N.GetString("lbl_users", App.Settings.Current.Language);
+                                }
                             });
                             continue;
                         }
@@ -192,6 +198,12 @@ namespace ModTogetherUniversal
                 BtnCopyPin.Visibility = Visibility.Collapsed;
                 LblHostPin.Text = Models.I18N.GetString("host_pin", App.Settings.Current.Language);
                 LblHostPin.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(160, 160, 160));
+                
+                if (MainWindow.Instance != null)
+                {
+                    if (MainWindow.Instance.UserList != null) MainWindow.Instance.UserList.Items.Clear();
+                    if (MainWindow.Instance.LblUsers != null) MainWindow.Instance.LblUsers.Text = Models.I18N.GetString("lbl_users", App.Settings.Current.Language);
+                }
                 return;
             }
 

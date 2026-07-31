@@ -213,7 +213,8 @@ namespace ModTogetherUniversal.Services
                         }).ToList();
 
                     string logPath = Path.Combine(basePath, "plugin_types_debug.log");
-                    System.IO.File.WriteAllText(logPath, typesLog.ToString());
+                    // Bug P5 Fix: Removed debug file write — was written on every plugin load in production
+                    // System.IO.File.WriteAllText(logPath, typesLog.ToString());
 
                     foreach (var type in pluginTypes)
                     {
@@ -274,7 +275,7 @@ namespace ModTogetherUniversal.Services
             return Convert.ToHexString(hash);
         }
 
-        private bool InspectPluginSecurity(string filePath, byte[] rawBytes, out string dangerReason)
+        public bool InspectPluginSecurity(string filePath, byte[] rawBytes, out string dangerReason)
         {
             dangerReason = "";
             try
@@ -327,17 +328,18 @@ namespace ModTogetherUniversal.Services
             _type = instance.GetType();
         }
 
-        public string Name => (string)_type.GetProperty("Name")?.GetValue(_instance)! ?? "Unknown Proxy";
-        public string TargetGame => (string)_type.GetProperty("TargetGame")?.GetValue(_instance)! ?? "";
-        public string Version => (string)_type.GetProperty("Version")?.GetValue(_instance)! ?? "1.0.0";
-        public string Description => (string)_type.GetProperty("Description")?.GetValue(_instance)! ?? "";
-        public string Author => (string)_type.GetProperty("Author")?.GetValue(_instance)! ?? "";
-        public string NavigationIcon => (string)_type.GetProperty("NavigationIcon")?.GetValue(_instance)! ?? "Box24";
+        public string Name => _type.GetProperty("Name")?.GetValue(_instance) as string ?? "Unknown Proxy";
+        public string TargetGame => _type.GetProperty("TargetGame")?.GetValue(_instance) as string ?? "";
+        public string Version => _type.GetProperty("Version")?.GetValue(_instance) as string ?? "1.0.0";
+        public string Description => _type.GetProperty("Description")?.GetValue(_instance) as string ?? "";
+        public string Author => _type.GetProperty("Author")?.GetValue(_instance) as string ?? "";
+        public string NavigationIcon => _type.GetProperty("NavigationIcon")?.GetValue(_instance) as string ?? "Box24";
 
         public void Initialize(string gameDirectory) => _type.GetMethod("Initialize")?.Invoke(_instance, new object[] { gameDirectory });
         public void SetLanguage(string language) => _type.GetMethod("SetLanguage")?.Invoke(_instance, new object[] { language });
-        public System.Windows.Controls.Page CreatePage() => (System.Windows.Controls.Page)_type.GetMethod("CreatePage")?.Invoke(_instance, null)!;
-        public bool IsValidGameDirectory(string gameDirectory) => (bool)(_type.GetMethod("IsValidGameDirectory")?.Invoke(_instance, new object[] { gameDirectory }) ?? false);
+        // Bug P3 Fix: Return null gracefully instead of crashing with NullReferenceException via !
+        public System.Windows.Controls.Page? CreatePage() => _type.GetMethod("CreatePage")?.Invoke(_instance, null) as System.Windows.Controls.Page;
+        public bool IsValidGameDirectory(string gameDirectory) => _type.GetMethod("IsValidGameDirectory")?.Invoke(_instance, new object[] { gameDirectory }) is bool b && b;
     }
 }
 

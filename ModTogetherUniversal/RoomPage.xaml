@@ -133,8 +133,8 @@
 
                     <Border Grid.Row="0" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="20,16">
                         <StackPanel Orientation="Horizontal">
-                            <ui:SymbolIcon Symbol="People24" FontSize="20" Margin="0,0,12,0" />
-                            <TextBlock Text="Session Members" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            <ui:SymbolIcon Symbol="People24" FontSize="20" Foreground="{DynamicResource SystemAccentColorPrimaryBrush}" Margin="0,0,12,0" />
+                            <TextBlock Text="Session Members" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
                             <TextBlock x:Name="LblSessionSummary" Text="(0 Connected)" FontSize="14" Foreground="{DynamicResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
                         </StackPanel>
                     </Border>
@@ -181,14 +181,14 @@
 
                                     <!-- User Info -->
                                     <StackPanel Grid.Column="1" VerticalAlignment="Center" MinWidth="150">
-                                        <TextBlock Text="{Binding Username}" FontWeight="SemiBold" FontSize="15" />
-                                        <TextBlock Text="{Binding CurrentActivity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Username}" Foreground="{DynamicResource TextFillColorPrimaryBrush}" FontWeight="SemiBold" FontSize="15" />
+                                        <TextBlock Text="{Binding CurrentActivity}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="13" Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
                                     </StackPanel>
 
                                     <!-- Ping Indicator -->
                                     <StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,24,0">
                                         <Ellipse Width="8" Height="8" Fill="{Binding PingColor}" Margin="0,0,6,0" />
-                                        <TextBlock Text="{Binding PingMs, StringFormat='{}{0} ms'}" Foreground="{DynamicResource TextFillColorTertiaryBrush}" FontSize="12" />
+                                        <TextBlock Text="{Binding PingMs, StringFormat='{}{0} ms'}" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" />
                                     </StackPanel>
 
                                     <!-- Actions (Host Only) -->
